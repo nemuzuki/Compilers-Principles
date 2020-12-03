@@ -26,10 +26,11 @@ Grammar
 
    15 instruction: type declare_list SEMICOLON
 
-   16 declare_list: ID
-   17             | ID ASSIGN expr
-   18             | declare_list COMMA ID
-   19             | declare_list COMMA ID ASSIGN expr
+   16 declare_list: declare
+   17             | declare_list COMMA declare
+
+   18 declare: ID
+   19        | ID ASSIGN expr
 
    20 if_else_statement: IF bool_statement statement
    21                  | IF bool_statement statement ELSE statement
@@ -39,7 +40,7 @@ Grammar
    23 bool_statement: LPAREN bool_expr RPAREN
 
    24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
-   25              | FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+   25              | FOR LPAREN instruction bool_expr SEMICOLON equation RPAREN statement
 
    26 return_statement: RETURN expr SEMICOLON
 
@@ -91,7 +92,7 @@ Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    ID (258) 16 17 18 19 27 28 40 48 49 50 51 58 59 60
+    ID (258) 18 19 27 28 40 48 49 50 51 58 59 60
     INTEGER (259) 41
     STRING (260) 27 28 55
     IF (261) 20 21
@@ -107,7 +108,7 @@ Terminals, with rules where they appear
     LBRACE (271) 4
     RBRACE (272) 4
     SEMICOLON (273) 13 14 15 24 25 26 27 28
-    COMMA (274) 18 19 27 28 57
+    COMMA (274) 17 27 28 57
     QUOTA (275)
     GET_ADDR (276) 28
     TRUE (277) 29
@@ -130,7 +131,7 @@ Terminals, with rules where they appear
     EQUAL (294) 31
     AND (295) 37
     OR (296) 38
-    ASSIGN (297) 17 19
+    ASSIGN (297) 19
     PRINTF (298) 27
     SCANF (299) 28
     LOWER_THEN_ELSE (300)
@@ -152,50 +153,53 @@ Nonterminals, with rules where they appear
         on right: 2 3 20 21 22 24 25 59 60
     instruction (51)
         on left: 15
-        on right: 6
+        on right: 6 25
     declare_list (52)
-        on left: 16 17 18 19
-        on right: 14 15 18 19 24 25
-    if_else_statement (53)
+        on left: 16 17
+        on right: 14 15 17 24
+    declare (53)
+        on left: 18 19
+        on right: 16 17
+    if_else_statement (54)
         on left: 20 21
         on right: 9
-    while_statement (54)
+    while_statement (55)
         on left: 22
         on right: 10
-    bool_statement (55)
+    bool_statement (56)
         on left: 23
         on right: 20 21 22
-    for_statement (56)
+    for_statement (57)
         on left: 24 25
         on right: 11
-    return_statement (57)
+    return_statement (58)
         on left: 26
         on right: 12
-    printf_statement (58)
+    printf_statement (59)
         on left: 27
         on right: 8
-    scanf_statement (59)
+    scanf_statement (60)
         on left: 28
         on right: 7
-    bool_expr (60)
+    bool_expr (61)
         on left: 29 30 31 32 33 34 35 36 37 38 39
         on right: 23 24 25 37 38 39
-    expr (61)
+    expr (62)
         on left: 40 41 42 43 44 45 46 47
-        on right: 17 19 26 31 32 33 34 35 36 42 43 44 45 46 47 48 49
-    equation (62)
+        on right: 19 26 31 32 33 34 35 36 42 43 44 45 46 47 48 49
+    equation (63)
         on left: 48 49 50 51
         on right: 13 24 25
-    type (63)
+    type (64)
         on left: 52 53 54 55
-        on right: 15 25 58 59 60
-    parameter_list (64)
+        on right: 15 58 59 60
+    parameter_list (65)
         on left: 56 57
         on right: 57 59
-    parameter (65)
+    parameter (66)
         on left: 58
         on right: 56 57
-    function (66)
+    function (67)
         on left: 59 60
         on right: 5
 
@@ -222,33 +226,34 @@ State 0
     statement          go to state 15
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 1
 
-   16 declare_list: ID .
-   17             | ID . ASSIGN expr
+   18 declare: ID .
+   19        | ID . ASSIGN expr
    48 equation: ID . ADD_SELF expr
    49         | ID . SUB_SELF expr
    50         | ID . ADD_ONE
    51         | ID . SUB_ONE
 
-    ADD_ONE   shift, and go to state 27
-    SUB_ONE   shift, and go to state 28
-    ADD_SELF  shift, and go to state 29
-    SUB_SELF  shift, and go to state 30
-    ASSIGN    shift, and go to state 31
+    ADD_ONE   shift, and go to state 28
+    SUB_ONE   shift, and go to state 29
+    ADD_SELF  shift, and go to state 30
+    SUB_SELF  shift, and go to state 31
+    ASSIGN    shift, and go to state 32
 
-    $default  reduce using rule 16 (declare_list)
+    $default  reduce using rule 18 (declare)
 
 
 State 2
@@ -263,37 +268,37 @@ State 3
    20 if_else_statement: IF . bool_statement statement
    21                  | IF . bool_statement statement ELSE statement
 
-    LPAREN  shift, and go to state 32
+    LPAREN  shift, and go to state 33
 
-    bool_statement  go to state 33
+    bool_statement  go to state 34
 
 
 State 4
 
    22 while_statement: WHILE . bool_statement statement
 
-    LPAREN  shift, and go to state 32
+    LPAREN  shift, and go to state 33
 
-    bool_statement  go to state 34
+    bool_statement  go to state 35
 
 
 State 5
 
    24 for_statement: FOR . LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
-   25              | FOR . LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+   25              | FOR . LPAREN instruction bool_expr SEMICOLON equation RPAREN statement
 
-    LPAREN  shift, and go to state 35
+    LPAREN  shift, and go to state 36
 
 
 State 6
 
    26 return_statement: RETURN . expr SEMICOLON
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    expr  go to state 39
+    expr  go to state 40
 
 
 State 7
@@ -334,40 +339,41 @@ State 10
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statements         go to state 40
+    statements         go to state 41
     statement          go to state 15
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 11
 
    27 printf_statement: PRINTF . LPAREN STRING COMMA ID RPAREN SEMICOLON
 
-    LPAREN  shift, and go to state 41
+    LPAREN  shift, and go to state 42
 
 
 State 12
 
    28 scanf_statement: SCANF . LPAREN STRING COMMA GET_ADDR ID RPAREN SEMICOLON
 
-    LPAREN  shift, and go to state 42
+    LPAREN  shift, and go to state 43
 
 
 State 13
 
     0 $accept: program . $end
 
-    $end  shift, and go to state 43
+    $end  shift, and go to state 44
 
 
 State 14
@@ -390,18 +396,19 @@ State 14
 
     $default  reduce using rule 1 (program)
 
-    statement          go to state 44
+    statement          go to state 45
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 15
@@ -421,143 +428,150 @@ State 16
 State 17
 
    14 statement: declare_list . SEMICOLON
-   18 declare_list: declare_list . COMMA ID
-   19             | declare_list . COMMA ID ASSIGN expr
+   17 declare_list: declare_list . COMMA declare
 
-    SEMICOLON  shift, and go to state 45
-    COMMA      shift, and go to state 46
+    SEMICOLON  shift, and go to state 46
+    COMMA      shift, and go to state 47
 
 
 State 18
+
+   16 declare_list: declare .
+
+    $default  reduce using rule 16 (declare_list)
+
+
+State 19
 
     9 statement: if_else_statement .
 
     $default  reduce using rule 9 (statement)
 
 
-State 19
+State 20
 
    10 statement: while_statement .
 
     $default  reduce using rule 10 (statement)
 
 
-State 20
+State 21
 
    11 statement: for_statement .
 
     $default  reduce using rule 11 (statement)
 
 
-State 21
+State 22
 
    12 statement: return_statement .
 
     $default  reduce using rule 12 (statement)
 
 
-State 22
+State 23
 
     8 statement: printf_statement .
 
     $default  reduce using rule 8 (statement)
 
 
-State 23
+State 24
 
     7 statement: scanf_statement .
 
     $default  reduce using rule 7 (statement)
 
 
-State 24
+State 25
 
    13 statement: equation . SEMICOLON
 
-    SEMICOLON  shift, and go to state 47
+    SEMICOLON  shift, and go to state 48
 
 
-State 25
+State 26
 
    15 instruction: type . declare_list SEMICOLON
    59 function: type . ID LPAREN parameter_list RPAREN statement
    60         | type . ID LPAREN RPAREN statement
 
-    ID  shift, and go to state 48
+    ID  shift, and go to state 49
 
-    declare_list  go to state 49
+    declare_list  go to state 50
+    declare       go to state 18
 
 
-State 26
+State 27
 
     5 statement: function .
 
     $default  reduce using rule 5 (statement)
 
 
-State 27
+State 28
 
    50 equation: ID ADD_ONE .
 
     $default  reduce using rule 50 (equation)
 
 
-State 28
+State 29
 
    51 equation: ID SUB_ONE .
 
     $default  reduce using rule 51 (equation)
 
 
-State 29
+State 30
 
    48 equation: ID ADD_SELF . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
-
-    expr  go to state 50
-
-
-State 30
-
-   49 equation: ID SUB_SELF . expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 51
 
 
 State 31
 
-   17 declare_list: ID ASSIGN . expr
+   49 equation: ID SUB_SELF . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 52
 
 
 State 32
 
-   23 bool_statement: LPAREN . bool_expr RPAREN
+   19 declare: ID ASSIGN . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    bool_expr  go to state 56
-    expr       go to state 57
+    expr  go to state 53
 
 
 State 33
+
+   23 bool_statement: LPAREN . bool_expr RPAREN
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
+
+    bool_expr  go to state 57
+    expr       go to state 58
+
+
+State 34
 
    20 if_else_statement: IF bool_statement . statement
    21                  | IF bool_statement . statement ELSE statement
@@ -575,21 +589,22 @@ State 33
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statement          go to state 58
+    statement          go to state 59
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
-State 34
+State 35
 
    22 while_statement: WHILE bool_statement . statement
 
@@ -606,61 +621,64 @@ State 34
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statement          go to state 59
+    statement          go to state 60
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
-State 35
+State 36
 
    24 for_statement: FOR LPAREN . declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
-   25              | FOR LPAREN . type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+   25              | FOR LPAREN . instruction bool_expr SEMICOLON equation RPAREN statement
 
-    ID      shift, and go to state 60
+    ID      shift, and go to state 61
     STRING  shift, and go to state 2
     INT     shift, and go to state 7
     VOID    shift, and go to state 8
     CHAR    shift, and go to state 9
 
-    declare_list  go to state 61
-    type          go to state 62
+    instruction   go to state 62
+    declare_list  go to state 63
+    declare       go to state 18
+    type          go to state 64
 
 
-State 36
+State 37
 
    40 expr: ID .
 
     $default  reduce using rule 40 (expr)
 
 
-State 37
+State 38
 
    41 expr: INTEGER .
 
     $default  reduce using rule 41 (expr)
 
 
-State 38
+State 39
 
    47 expr: SUB . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    expr  go to state 63
+    expr  go to state 65
 
 
-State 39
+State 40
 
    26 return_statement: RETURN expr . SEMICOLON
    42 expr: expr . ADD expr
@@ -669,15 +687,15 @@ State 39
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    SEMICOLON  shift, and go to state 64
-    MUL        shift, and go to state 65
-    DIV        shift, and go to state 66
-    MOD        shift, and go to state 67
-    ADD        shift, and go to state 68
-    SUB        shift, and go to state 69
+    SEMICOLON  shift, and go to state 66
+    MUL        shift, and go to state 67
+    DIV        shift, and go to state 68
+    MOD        shift, and go to state 69
+    ADD        shift, and go to state 70
+    SUB        shift, and go to state 71
 
 
-State 40
+State 41
 
     3 statements: statements . statement
     4 statement: LBRACE statements . RBRACE
@@ -692,113 +710,96 @@ State 40
     VOID    shift, and go to state 8
     CHAR    shift, and go to state 9
     LBRACE  shift, and go to state 10
-    RBRACE  shift, and go to state 70
+    RBRACE  shift, and go to state 72
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statement          go to state 44
+    statement          go to state 45
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
-
-
-State 41
-
-   27 printf_statement: PRINTF LPAREN . STRING COMMA ID RPAREN SEMICOLON
-
-    STRING  shift, and go to state 71
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 42
 
-   28 scanf_statement: SCANF LPAREN . STRING COMMA GET_ADDR ID RPAREN SEMICOLON
+   27 printf_statement: PRINTF LPAREN . STRING COMMA ID RPAREN SEMICOLON
 
-    STRING  shift, and go to state 72
+    STRING  shift, and go to state 73
 
 
 State 43
+
+   28 scanf_statement: SCANF LPAREN . STRING COMMA GET_ADDR ID RPAREN SEMICOLON
+
+    STRING  shift, and go to state 74
+
+
+State 44
 
     0 $accept: program $end .
 
     $default  accept
 
 
-State 44
+State 45
 
     3 statements: statements statement .
 
     $default  reduce using rule 3 (statements)
 
 
-State 45
+State 46
 
    14 statement: declare_list SEMICOLON .
 
     $default  reduce using rule 14 (statement)
 
 
-State 46
-
-   18 declare_list: declare_list COMMA . ID
-   19             | declare_list COMMA . ID ASSIGN expr
-
-    ID  shift, and go to state 73
-
-
 State 47
+
+   17 declare_list: declare_list COMMA . declare
+
+    ID  shift, and go to state 61
+
+    declare  go to state 75
+
+
+State 48
 
    13 statement: equation SEMICOLON .
 
     $default  reduce using rule 13 (statement)
 
 
-State 48
+State 49
 
-   16 declare_list: ID .
-   17             | ID . ASSIGN expr
+   18 declare: ID .
+   19        | ID . ASSIGN expr
    59 function: type ID . LPAREN parameter_list RPAREN statement
    60         | type ID . LPAREN RPAREN statement
 
-    LPAREN  shift, and go to state 74
-    ASSIGN  shift, and go to state 31
+    LPAREN  shift, and go to state 76
+    ASSIGN  shift, and go to state 32
 
-    $default  reduce using rule 16 (declare_list)
-
-
-State 49
-
-   15 instruction: type declare_list . SEMICOLON
-   18 declare_list: declare_list . COMMA ID
-   19             | declare_list . COMMA ID ASSIGN expr
-
-    SEMICOLON  shift, and go to state 75
-    COMMA      shift, and go to state 46
+    $default  reduce using rule 18 (declare)
 
 
 State 50
 
-   42 expr: expr . ADD expr
-   43     | expr . SUB expr
-   44     | expr . MUL expr
-   45     | expr . DIV expr
-   46     | expr . MOD expr
-   48 equation: ID ADD_SELF expr .
+   15 instruction: type declare_list . SEMICOLON
+   17 declare_list: declare_list . COMMA declare
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
-
-    $default  reduce using rule 48 (equation)
+    SEMICOLON  shift, and go to state 77
+    COMMA      shift, and go to state 47
 
 
 State 51
@@ -808,76 +809,94 @@ State 51
    44     | expr . MUL expr
    45     | expr . DIV expr
    46     | expr . MOD expr
-   49 equation: ID SUB_SELF expr .
+   48 equation: ID ADD_SELF expr .
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
-    $default  reduce using rule 49 (equation)
+    $default  reduce using rule 48 (equation)
 
 
 State 52
 
-   17 declare_list: ID ASSIGN expr .
+   42 expr: expr . ADD expr
+   43     | expr . SUB expr
+   44     | expr . MUL expr
+   45     | expr . DIV expr
+   46     | expr . MOD expr
+   49 equation: ID SUB_SELF expr .
+
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
+
+    $default  reduce using rule 49 (equation)
+
+
+State 53
+
+   19 declare: ID ASSIGN expr .
    42 expr: expr . ADD expr
    43     | expr . SUB expr
    44     | expr . MUL expr
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
-    $default  reduce using rule 17 (declare_list)
+    $default  reduce using rule 19 (declare)
 
 
-State 53
+State 54
 
    29 bool_expr: TRUE .
 
     $default  reduce using rule 29 (bool_expr)
 
 
-State 54
+State 55
 
    30 bool_expr: FALSE .
 
     $default  reduce using rule 30 (bool_expr)
 
 
-State 55
+State 56
 
    39 bool_expr: NOT . bool_expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
 
-    bool_expr  go to state 76
-    expr       go to state 57
+    bool_expr  go to state 78
+    expr       go to state 58
 
 
-State 56
+State 57
 
    23 bool_statement: LPAREN bool_expr . RPAREN
    37 bool_expr: bool_expr . AND bool_expr
    38          | bool_expr . OR bool_expr
 
-    RPAREN  shift, and go to state 77
-    AND     shift, and go to state 78
-    OR      shift, and go to state 79
+    RPAREN  shift, and go to state 79
+    AND     shift, and go to state 80
+    OR      shift, and go to state 81
 
 
-State 57
+State 58
 
    31 bool_expr: expr . EQUAL expr
    32          | expr . LARGER expr
@@ -891,66 +910,81 @@ State 57
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL            shift, and go to state 65
-    DIV            shift, and go to state 66
-    MOD            shift, and go to state 67
-    ADD            shift, and go to state 68
-    SUB            shift, and go to state 69
-    LARGER         shift, and go to state 80
-    SMALLER        shift, and go to state 81
-    LARGER_EQUAL   shift, and go to state 82
-    SMALLER_EQUAL  shift, and go to state 83
-    NOT_EQUAL      shift, and go to state 84
-    EQUAL          shift, and go to state 85
+    MUL            shift, and go to state 67
+    DIV            shift, and go to state 68
+    MOD            shift, and go to state 69
+    ADD            shift, and go to state 70
+    SUB            shift, and go to state 71
+    LARGER         shift, and go to state 82
+    SMALLER        shift, and go to state 83
+    LARGER_EQUAL   shift, and go to state 84
+    SMALLER_EQUAL  shift, and go to state 85
+    NOT_EQUAL      shift, and go to state 86
+    EQUAL          shift, and go to state 87
 
 
-State 58
+State 59
 
    20 if_else_statement: IF bool_statement statement .
    21                  | IF bool_statement statement . ELSE statement
 
-    ELSE  shift, and go to state 86
+    ELSE  shift, and go to state 88
 
     $default  reduce using rule 20 (if_else_statement)
 
 
-State 59
+State 60
 
    22 while_statement: WHILE bool_statement statement .
 
     $default  reduce using rule 22 (while_statement)
 
 
-State 60
-
-   16 declare_list: ID .
-   17             | ID . ASSIGN expr
-
-    ASSIGN  shift, and go to state 31
-
-    $default  reduce using rule 16 (declare_list)
-
-
 State 61
 
-   18 declare_list: declare_list . COMMA ID
-   19             | declare_list . COMMA ID ASSIGN expr
-   24 for_statement: FOR LPAREN declare_list . SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+   18 declare: ID .
+   19        | ID . ASSIGN expr
 
-    SEMICOLON  shift, and go to state 87
-    COMMA      shift, and go to state 46
+    ASSIGN  shift, and go to state 32
+
+    $default  reduce using rule 18 (declare)
 
 
 State 62
 
-   25 for_statement: FOR LPAREN type . declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+   25 for_statement: FOR LPAREN instruction . bool_expr SEMICOLON equation RPAREN statement
 
-    ID  shift, and go to state 60
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
 
-    declare_list  go to state 88
+    bool_expr  go to state 89
+    expr       go to state 58
 
 
 State 63
+
+   17 declare_list: declare_list . COMMA declare
+   24 for_statement: FOR LPAREN declare_list . SEMICOLON bool_expr SEMICOLON equation RPAREN statement
+
+    SEMICOLON  shift, and go to state 90
+    COMMA      shift, and go to state 47
+
+
+State 64
+
+   15 instruction: type . declare_list SEMICOLON
+
+    ID  shift, and go to state 61
+
+    declare_list  go to state 50
+    declare       go to state 18
+
+
+State 65
 
    42 expr: expr . ADD expr
    43     | expr . SUB expr
@@ -962,100 +996,97 @@ State 63
     $default  reduce using rule 47 (expr)
 
 
-State 64
+State 66
 
    26 return_statement: RETURN expr SEMICOLON .
 
     $default  reduce using rule 26 (return_statement)
 
 
-State 65
+State 67
 
    44 expr: expr MUL . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
-
-    expr  go to state 89
-
-
-State 66
-
-   45 expr: expr DIV . expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
-
-    expr  go to state 90
-
-
-State 67
-
-   46 expr: expr MOD . expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 91
 
 
 State 68
 
-   42 expr: expr ADD . expr
+   45 expr: expr DIV . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 92
 
 
 State 69
 
-   43 expr: expr SUB . expr
+   46 expr: expr MOD . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 93
 
 
 State 70
 
+   42 expr: expr ADD . expr
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
+
+    expr  go to state 94
+
+
+State 71
+
+   43 expr: expr SUB . expr
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
+
+    expr  go to state 95
+
+
+State 72
+
     4 statement: LBRACE statements RBRACE .
 
     $default  reduce using rule 4 (statement)
 
 
-State 71
+State 73
 
    27 printf_statement: PRINTF LPAREN STRING . COMMA ID RPAREN SEMICOLON
 
-    COMMA  shift, and go to state 94
-
-
-State 72
-
-   28 scanf_statement: SCANF LPAREN STRING . COMMA GET_ADDR ID RPAREN SEMICOLON
-
-    COMMA  shift, and go to state 95
-
-
-State 73
-
-   18 declare_list: declare_list COMMA ID .
-   19             | declare_list COMMA ID . ASSIGN expr
-
-    ASSIGN  shift, and go to state 96
-
-    $default  reduce using rule 18 (declare_list)
+    COMMA  shift, and go to state 96
 
 
 State 74
+
+   28 scanf_statement: SCANF LPAREN STRING . COMMA GET_ADDR ID RPAREN SEMICOLON
+
+    COMMA  shift, and go to state 97
+
+
+State 75
+
+   17 declare_list: declare_list COMMA declare .
+
+    $default  reduce using rule 17 (declare_list)
+
+
+State 76
 
    59 function: type ID LPAREN . parameter_list RPAREN statement
    60         | type ID LPAREN . RPAREN statement
@@ -1064,136 +1095,136 @@ State 74
     INT     shift, and go to state 7
     VOID    shift, and go to state 8
     CHAR    shift, and go to state 9
-    RPAREN  shift, and go to state 97
+    RPAREN  shift, and go to state 98
 
-    type            go to state 98
-    parameter_list  go to state 99
-    parameter       go to state 100
+    type            go to state 99
+    parameter_list  go to state 100
+    parameter       go to state 101
 
 
-State 75
+State 77
 
    15 instruction: type declare_list SEMICOLON .
 
     $default  reduce using rule 15 (instruction)
 
 
-State 76
+State 78
 
    37 bool_expr: bool_expr . AND bool_expr
    38          | bool_expr . OR bool_expr
    39          | NOT bool_expr .
 
-    AND  shift, and go to state 78
-    OR   shift, and go to state 79
+    AND  shift, and go to state 80
+    OR   shift, and go to state 81
 
     $default  reduce using rule 39 (bool_expr)
 
 
-State 77
+State 79
 
    23 bool_statement: LPAREN bool_expr RPAREN .
 
     $default  reduce using rule 23 (bool_statement)
 
 
-State 78
+State 80
 
    37 bool_expr: bool_expr AND . bool_expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
-
-    bool_expr  go to state 101
-    expr       go to state 57
-
-
-State 79
-
-   38 bool_expr: bool_expr OR . bool_expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
 
     bool_expr  go to state 102
-    expr       go to state 57
-
-
-State 80
-
-   32 bool_expr: expr LARGER . expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
-
-    expr  go to state 103
+    expr       go to state 58
 
 
 State 81
 
-   33 bool_expr: expr SMALLER . expr
+   38 bool_expr: bool_expr OR . bool_expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
 
-    expr  go to state 104
+    bool_expr  go to state 103
+    expr       go to state 58
 
 
 State 82
 
-   34 bool_expr: expr LARGER_EQUAL . expr
+   32 bool_expr: expr LARGER . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    expr  go to state 105
+    expr  go to state 104
 
 
 State 83
 
-   35 bool_expr: expr SMALLER_EQUAL . expr
+   33 bool_expr: expr SMALLER . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    expr  go to state 106
+    expr  go to state 105
 
 
 State 84
 
-   36 bool_expr: expr NOT_EQUAL . expr
+   34 bool_expr: expr LARGER_EQUAL . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
-    expr  go to state 107
+    expr  go to state 106
 
 
 State 85
 
-   31 bool_expr: expr EQUAL . expr
+   35 bool_expr: expr SMALLER_EQUAL . expr
 
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
+
+    expr  go to state 107
+
+
+State 86
+
+   36 bool_expr: expr NOT_EQUAL . expr
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
 
     expr  go to state 108
 
 
-State 86
+State 87
+
+   31 bool_expr: expr EQUAL . expr
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    SUB      shift, and go to state 39
+
+    expr  go to state 109
+
+
+State 88
 
    21 if_else_statement: IF bool_statement statement ELSE . statement
 
@@ -1210,46 +1241,48 @@ State 86
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statement          go to state 109
+    statement          go to state 110
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
-
-
-State 87
-
-   24 for_statement: FOR LPAREN declare_list SEMICOLON . bool_expr SEMICOLON equation RPAREN statement
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
-
-    bool_expr  go to state 110
-    expr       go to state 57
-
-
-State 88
-
-   18 declare_list: declare_list . COMMA ID
-   19             | declare_list . COMMA ID ASSIGN expr
-   25 for_statement: FOR LPAREN type declare_list . SEMICOLON bool_expr SEMICOLON equation RPAREN statement
-
-    SEMICOLON  shift, and go to state 111
-    COMMA      shift, and go to state 46
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 89
+
+   25 for_statement: FOR LPAREN instruction bool_expr . SEMICOLON equation RPAREN statement
+   37 bool_expr: bool_expr . AND bool_expr
+   38          | bool_expr . OR bool_expr
+
+    SEMICOLON  shift, and go to state 111
+    AND        shift, and go to state 80
+    OR         shift, and go to state 81
+
+
+State 90
+
+   24 for_statement: FOR LPAREN declare_list SEMICOLON . bool_expr SEMICOLON equation RPAREN statement
+
+    ID       shift, and go to state 37
+    INTEGER  shift, and go to state 38
+    TRUE     shift, and go to state 54
+    FALSE    shift, and go to state 55
+    NOT      shift, and go to state 56
+    SUB      shift, and go to state 39
+
+    bool_expr  go to state 112
+    expr       go to state 58
+
+
+State 91
 
    42 expr: expr . ADD expr
    43     | expr . SUB expr
@@ -1258,13 +1291,13 @@ State 89
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 44 (expr)
 
 
-State 90
+State 92
 
    42 expr: expr . ADD expr
    43     | expr . SUB expr
@@ -1273,13 +1306,13 @@ State 90
    45     | expr DIV expr .
    46     | expr . MOD expr
 
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 45 (expr)
 
 
-State 91
+State 93
 
    42 expr: expr . ADD expr
    43     | expr . SUB expr
@@ -1288,13 +1321,13 @@ State 91
    46     | expr . MOD expr
    46     | expr MOD expr .
 
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 46 (expr)
 
 
-State 92
+State 94
 
    42 expr: expr . ADD expr
    42     | expr ADD expr .
@@ -1306,7 +1339,7 @@ State 92
     $default  reduce using rule 42 (expr)
 
 
-State 93
+State 95
 
    42 expr: expr . ADD expr
    43     | expr . SUB expr
@@ -1318,32 +1351,21 @@ State 93
     $default  reduce using rule 43 (expr)
 
 
-State 94
+State 96
 
    27 printf_statement: PRINTF LPAREN STRING COMMA . ID RPAREN SEMICOLON
 
-    ID  shift, and go to state 112
-
-
-State 95
-
-   28 scanf_statement: SCANF LPAREN STRING COMMA . GET_ADDR ID RPAREN SEMICOLON
-
-    GET_ADDR  shift, and go to state 113
-
-
-State 96
-
-   19 declare_list: declare_list COMMA ID ASSIGN . expr
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    SUB      shift, and go to state 38
-
-    expr  go to state 114
+    ID  shift, and go to state 113
 
 
 State 97
+
+   28 scanf_statement: SCANF LPAREN STRING COMMA . GET_ADDR ID RPAREN SEMICOLON
+
+    GET_ADDR  shift, and go to state 114
+
+
+State 98
 
    60 function: type ID LPAREN RPAREN . statement
 
@@ -1363,25 +1385,26 @@ State 97
     statement          go to state 115
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
-State 98
+State 99
 
    58 parameter: type . ID
 
     ID  shift, and go to state 116
 
 
-State 99
+State 100
 
    57 parameter_list: parameter_list . COMMA parameter
    59 function: type ID LPAREN parameter_list . RPAREN statement
@@ -1390,14 +1413,14 @@ State 99
     COMMA   shift, and go to state 118
 
 
-State 100
+State 101
 
    56 parameter_list: parameter .
 
     $default  reduce using rule 56 (parameter_list)
 
 
-State 101
+State 102
 
    37 bool_expr: bool_expr . AND bool_expr
    37          | bool_expr AND bool_expr .
@@ -1406,16 +1429,18 @@ State 101
     $default  reduce using rule 37 (bool_expr)
 
 
-State 102
+State 103
 
    37 bool_expr: bool_expr . AND bool_expr
    38          | bool_expr . OR bool_expr
    38          | bool_expr OR bool_expr .
 
+    AND  shift, and go to state 80
+
     $default  reduce using rule 38 (bool_expr)
 
 
-State 103
+State 104
 
    32 bool_expr: expr LARGER expr .
    42 expr: expr . ADD expr
@@ -1424,16 +1449,16 @@ State 103
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 32 (bool_expr)
 
 
-State 104
+State 105
 
    33 bool_expr: expr SMALLER expr .
    42 expr: expr . ADD expr
@@ -1442,16 +1467,16 @@ State 104
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 33 (bool_expr)
 
 
-State 105
+State 106
 
    34 bool_expr: expr LARGER_EQUAL expr .
    42 expr: expr . ADD expr
@@ -1460,16 +1485,16 @@ State 105
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 34 (bool_expr)
 
 
-State 106
+State 107
 
    35 bool_expr: expr SMALLER_EQUAL expr .
    42 expr: expr . ADD expr
@@ -1478,16 +1503,16 @@ State 106
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 35 (bool_expr)
 
 
-State 107
+State 108
 
    36 bool_expr: expr NOT_EQUAL expr .
    42 expr: expr . ADD expr
@@ -1496,16 +1521,16 @@ State 107
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 36 (bool_expr)
 
 
-State 108
+State 109
 
    31 bool_expr: expr EQUAL expr .
    42 expr: expr . ADD expr
@@ -1514,78 +1539,54 @@ State 108
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+    ADD  shift, and go to state 70
+    SUB  shift, and go to state 71
 
     $default  reduce using rule 31 (bool_expr)
 
 
-State 109
+State 110
 
    21 if_else_statement: IF bool_statement statement ELSE statement .
 
     $default  reduce using rule 21 (if_else_statement)
 
 
-State 110
+State 111
+
+   25 for_statement: FOR LPAREN instruction bool_expr SEMICOLON . equation RPAREN statement
+
+    ID  shift, and go to state 119
+
+    equation  go to state 120
+
+
+State 112
 
    24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr . SEMICOLON equation RPAREN statement
    37 bool_expr: bool_expr . AND bool_expr
    38          | bool_expr . OR bool_expr
 
-    SEMICOLON  shift, and go to state 119
-    AND        shift, and go to state 78
-    OR         shift, and go to state 79
-
-
-State 111
-
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON . bool_expr SEMICOLON equation RPAREN statement
-
-    ID       shift, and go to state 36
-    INTEGER  shift, and go to state 37
-    TRUE     shift, and go to state 53
-    FALSE    shift, and go to state 54
-    NOT      shift, and go to state 55
-    SUB      shift, and go to state 38
-
-    bool_expr  go to state 120
-    expr       go to state 57
-
-
-State 112
-
-   27 printf_statement: PRINTF LPAREN STRING COMMA ID . RPAREN SEMICOLON
-
-    RPAREN  shift, and go to state 121
+    SEMICOLON  shift, and go to state 121
+    AND        shift, and go to state 80
+    OR         shift, and go to state 81
 
 
 State 113
 
-   28 scanf_statement: SCANF LPAREN STRING COMMA GET_ADDR . ID RPAREN SEMICOLON
+   27 printf_statement: PRINTF LPAREN STRING COMMA ID . RPAREN SEMICOLON
 
-    ID  shift, and go to state 122
+    RPAREN  shift, and go to state 122
 
 
 State 114
 
-   19 declare_list: declare_list COMMA ID ASSIGN expr .
-   42 expr: expr . ADD expr
-   43     | expr . SUB expr
-   44     | expr . MUL expr
-   45     | expr . DIV expr
-   46     | expr . MOD expr
+   28 scanf_statement: SCANF LPAREN STRING COMMA GET_ADDR . ID RPAREN SEMICOLON
 
-    MUL  shift, and go to state 65
-    DIV  shift, and go to state 66
-    MOD  shift, and go to state 67
-    ADD  shift, and go to state 68
-    SUB  shift, and go to state 69
-
-    $default  reduce using rule 19 (declare_list)
+    ID  shift, and go to state 123
 
 
 State 115
@@ -1619,18 +1620,19 @@ State 117
     PRINTF  shift, and go to state 11
     SCANF   shift, and go to state 12
 
-    statement          go to state 123
+    statement          go to state 124
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 118
@@ -1642,85 +1644,104 @@ State 118
     VOID    shift, and go to state 8
     CHAR    shift, and go to state 9
 
-    type       go to state 98
-    parameter  go to state 124
+    type       go to state 99
+    parameter  go to state 125
 
 
 State 119
-
-   24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON . equation RPAREN statement
-
-    ID  shift, and go to state 125
-
-    equation  go to state 126
-
-
-State 120
-
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON bool_expr . SEMICOLON equation RPAREN statement
-   37 bool_expr: bool_expr . AND bool_expr
-   38          | bool_expr . OR bool_expr
-
-    SEMICOLON  shift, and go to state 127
-    AND        shift, and go to state 78
-    OR         shift, and go to state 79
-
-
-State 121
-
-   27 printf_statement: PRINTF LPAREN STRING COMMA ID RPAREN . SEMICOLON
-
-    SEMICOLON  shift, and go to state 128
-
-
-State 122
-
-   28 scanf_statement: SCANF LPAREN STRING COMMA GET_ADDR ID . RPAREN SEMICOLON
-
-    RPAREN  shift, and go to state 129
-
-
-State 123
-
-   59 function: type ID LPAREN parameter_list RPAREN statement .
-
-    $default  reduce using rule 59 (function)
-
-
-State 124
-
-   57 parameter_list: parameter_list COMMA parameter .
-
-    $default  reduce using rule 57 (parameter_list)
-
-
-State 125
 
    48 equation: ID . ADD_SELF expr
    49         | ID . SUB_SELF expr
    50         | ID . ADD_ONE
    51         | ID . SUB_ONE
 
-    ADD_ONE   shift, and go to state 27
-    SUB_ONE   shift, and go to state 28
-    ADD_SELF  shift, and go to state 29
-    SUB_SELF  shift, and go to state 30
+    ADD_ONE   shift, and go to state 28
+    SUB_ONE   shift, and go to state 29
+    ADD_SELF  shift, and go to state 30
+    SUB_SELF  shift, and go to state 31
+
+
+State 120
+
+   25 for_statement: FOR LPAREN instruction bool_expr SEMICOLON equation . RPAREN statement
+
+    RPAREN  shift, and go to state 126
+
+
+State 121
+
+   24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON . equation RPAREN statement
+
+    ID  shift, and go to state 119
+
+    equation  go to state 127
+
+
+State 122
+
+   27 printf_statement: PRINTF LPAREN STRING COMMA ID RPAREN . SEMICOLON
+
+    SEMICOLON  shift, and go to state 128
+
+
+State 123
+
+   28 scanf_statement: SCANF LPAREN STRING COMMA GET_ADDR ID . RPAREN SEMICOLON
+
+    RPAREN  shift, and go to state 129
+
+
+State 124
+
+   59 function: type ID LPAREN parameter_list RPAREN statement .
+
+    $default  reduce using rule 59 (function)
+
+
+State 125
+
+   57 parameter_list: parameter_list COMMA parameter .
+
+    $default  reduce using rule 57 (parameter_list)
 
 
 State 126
 
-   24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation . RPAREN statement
+   25 for_statement: FOR LPAREN instruction bool_expr SEMICOLON equation RPAREN . statement
 
-    RPAREN  shift, and go to state 130
+    ID      shift, and go to state 1
+    STRING  shift, and go to state 2
+    IF      shift, and go to state 3
+    WHILE   shift, and go to state 4
+    FOR     shift, and go to state 5
+    RETURN  shift, and go to state 6
+    INT     shift, and go to state 7
+    VOID    shift, and go to state 8
+    CHAR    shift, and go to state 9
+    LBRACE  shift, and go to state 10
+    PRINTF  shift, and go to state 11
+    SCANF   shift, and go to state 12
+
+    statement          go to state 130
+    instruction        go to state 16
+    declare_list       go to state 17
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 127
 
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON . equation RPAREN statement
+   24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation . RPAREN statement
 
-    ID  shift, and go to state 125
-
-    equation  go to state 131
+    RPAREN  shift, and go to state 131
 
 
 State 128
@@ -1738,6 +1759,13 @@ State 129
 
 
 State 130
+
+   25 for_statement: FOR LPAREN instruction bool_expr SEMICOLON equation RPAREN statement .
+
+    $default  reduce using rule 25 (for_statement)
+
+
+State 131
 
    24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN . statement
 
@@ -1757,22 +1785,16 @@ State 130
     statement          go to state 133
     instruction        go to state 16
     declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
-
-
-State 131
-
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation . RPAREN statement
-
-    RPAREN  shift, and go to state 134
+    declare            go to state 18
+    if_else_statement  go to state 19
+    while_statement    go to state 20
+    for_statement      go to state 21
+    return_statement   go to state 22
+    printf_statement   go to state 23
+    scanf_statement    go to state 24
+    equation           go to state 25
+    type               go to state 26
+    function           go to state 27
 
 
 State 132
@@ -1787,41 +1809,3 @@ State 133
    24 for_statement: FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement .
 
     $default  reduce using rule 24 (for_statement)
-
-
-State 134
-
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN . statement
-
-    ID      shift, and go to state 1
-    STRING  shift, and go to state 2
-    IF      shift, and go to state 3
-    WHILE   shift, and go to state 4
-    FOR     shift, and go to state 5
-    RETURN  shift, and go to state 6
-    INT     shift, and go to state 7
-    VOID    shift, and go to state 8
-    CHAR    shift, and go to state 9
-    LBRACE  shift, and go to state 10
-    PRINTF  shift, and go to state 11
-    SCANF   shift, and go to state 12
-
-    statement          go to state 135
-    instruction        go to state 16
-    declare_list       go to state 17
-    if_else_statement  go to state 18
-    while_statement    go to state 19
-    for_statement      go to state 20
-    return_statement   go to state 21
-    printf_statement   go to state 22
-    scanf_statement    go to state 23
-    equation           go to state 24
-    type               go to state 25
-    function           go to state 26
-
-
-State 135
-
-   25 for_statement: FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement .
-
-    $default  reduce using rule 25 (for_statement)

@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <iomanip>
+#include <vector>
 using namespace std;
 
 using std::cerr;
@@ -22,7 +23,7 @@ enum NodeType{
     NODE_OP,
     NODE_PARA,//参数类型int a
     NODE_FUNC,
-    NODE_DECL_LIST,//声明list
+    NODE_DECL,
     NODE_CHAR,
     NODE_STRING
 };

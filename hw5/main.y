@@ -1,6 +1,20 @@
 %{
     #include"common.h"
     extern TreeNode * root;
+    VarType now_type=VAR_VOID;
+    struct id{
+        string name;
+        VarType type;
+        id(){
+            name="";
+            type=VAR_VOID;
+        }
+        id(string n,VarType t){
+            name=n;
+            type=t;
+        }
+    };
+    vector<id>v; 
     int yylex();
     int yyerror( char const * );
 %}
@@ -33,7 +47,8 @@
 %left LARGER SMALLER LARGER_EQUAL SMALLER_EQUAL NOT_EQUAL
 %left EQUAL
 %right ASSIGN
-%left AND OR
+%left OR 
+%left AND
 %nonassoc LOWER_THEN_ELSE
 %nonassoc ELSE 
 %nonassoc UMINUS
@@ -44,23 +59,6 @@ program
         root->addChild($1);
     }
     ;
-
-    /*statements
-        : statement {
-            TreeNode *node=new TreeNode(NODE_STMT);
-            node->stmtType=STMTS;
-            node->addChild($1);
-            $$=node;
-        }
-        | statements statement{
-            TreeNode *node=new TreeNode(NODE_STMT);
-            node->stmtType=STMTS;
-            node->addChild($1);
-            node->addChild($2);
-            $$=node;
-        }
-        ;
-        */
 statements
     : statement {$$=$1;}
     | statements statement{$$=$1;$$->addSibling($2);}
@@ -87,33 +85,29 @@ instruction
         node->stmtType=STMT_DECL;
         node->addChild($1);
         node->addChild($2);
+        $2->varType=$1->varType;
         $$=node;  
     }
     ;
-
 declare_list
+    : declare{
+        $$=$1;
+    }
+    | declare_list COMMA declare{
+        $$=$1;
+        $$->addSibling($3);
+    }
+    ;
+declare
     : ID {//b
-        TreeNode *node=new TreeNode(NODE_DECL_LIST);
+        TreeNode *node=new TreeNode(NODE_DECL);
         node->addChild($1);
         $$=node; 
     }    
     | ID ASSIGN expr {//a=1
-        TreeNode *node=new TreeNode(NODE_DECL_LIST);
+        TreeNode *node=new TreeNode(NODE_DECL);
         node->addChild($1);
         node->addChild($3);
-        $$=node; 
-    }
-    | declare_list COMMA ID {//a=1,b
-        TreeNode *node=new TreeNode(NODE_DECL_LIST);
-        node->addChild($1);
-        node->addChild($3);
-        $$=node; 
-    }
-    | declare_list COMMA ID ASSIGN expr{//a,b=1
-        TreeNode *node=new TreeNode(NODE_DECL_LIST);
-        node->addChild($1);
-        node->addChild($3);
-        node->addChild($5);
         $$=node; 
     }
     ;
@@ -152,7 +146,7 @@ bool_statement
 
 for_statement
     : FOR LPAREN declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement {
-        //for(int i=0; i<b; i++)
+        //for(i=0; i<b; i++)
         TreeNode *node=new TreeNode(NODE_STMT);
         node->stmtType=STMT_FOR;
         node->addChild($3);
@@ -161,7 +155,7 @@ for_statement
         node->addChild($9);
         $$=node;
     }
-    | FOR LPAREN type declare_list SEMICOLON bool_expr SEMICOLON equation RPAREN statement {
+    | FOR LPAREN instruction bool_expr SEMICOLON equation RPAREN statement {
         //for(int i=0; i<b; i++)
         TreeNode *node=new TreeNode(NODE_STMT);
         node->stmtType=STMT_FOR;
@@ -169,7 +163,6 @@ for_statement
         node->addChild($4);
         node->addChild($6);
         node->addChild($8);
-        node->addChild($10);
         $$=node;
     }
     ;

@@ -52,8 +52,7 @@ statement
 
 2.变量声明
 instruction：
-declare:a\b=2这样的单位
-设计了一个declare_list结构，declare的组合，以分号结尾
+设计了一个declare_list结构，因为变量声明可以是int a,b=2这样的组合，以分号结尾
 
 3.for_statement：
 两种for(i=1;i<0;++i)、for(int i=1;i<0;++i)

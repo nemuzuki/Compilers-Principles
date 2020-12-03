@@ -3,7 +3,6 @@
     #include"common.h"
     #include"main.tab.hh"
     #include <stack>
-    #include <vector>
     using namespace std;
     //为了实现作用域，必须存储作用域的结构，即哪个zone属于哪个zone 
     //zone栈，为了找父节点用 
@@ -13,6 +12,7 @@
     struct identifier{
     	string name;
     	int no; //作用域的编号
+        VarType type;//类型
         identifier(){}
         identifier(string n,int num){
             name=n;
@@ -20,7 +20,7 @@
         }
 	};
 
-    //结构体z是zone，每个zone包含一个id列表和一个父节点值
+    //结构体z是zone，每个zone包含一个符号表和一个父节点值
     struct z{
         vector<identifier>id_list;
         int father;
@@ -212,7 +212,6 @@ WHITE [\t ]
         if(i==zone[zone_now].id_list.size()){//如果没定义过，成功创建新id
             zone[zone_now].id_list.push_back(identifier(yytext,zone_now));
             printer("ID",yytext,zone_now);
-
             node->zone=zone_now;
             //id_cnt++;
         }

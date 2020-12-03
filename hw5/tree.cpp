@@ -100,7 +100,7 @@ void TreeNode::printNodeTypeInfo(TreeNode *node){
         case 9:
             cout<<"NODE_FUNC "<<setw(size)<<var_type[node->varType]+"_f";break;
         case 10:
-            cout<<"NODE_DECL_LIST "<<setw(size)<<".";break;
+            cout<<"NODE_DECL "<<setw(size)<<".";break;
         case 11:
             cout<<"NODE_CHAR "<<setw(size)<<node->char_val;break;
         case 12:

@@ -518,7 +518,6 @@ char *yytext;
     #include"common.h"
     #include"main.tab.hh"
     #include <stack>
-    #include <vector>
     using namespace std;
     //为了实现作用域，必须存储作用域的结构，即哪个zone属于哪个zone 
     //zone栈，为了找父节点用 
@@ -528,6 +527,7 @@ char *yytext;
     struct identifier{
     	string name;
     	int no; //作用域的编号
+        VarType type;//类型
         identifier(){}
         identifier(string n,int num){
             name=n;
@@ -535,7 +535,7 @@ char *yytext;
         }
 	};
 
-    //结构体z是zone，每个zone包含一个id列表和一个父节点值
+    //结构体z是zone，每个zone包含一个符号表和一个父节点值
     struct z{
         vector<identifier>id_list;
         int father;
@@ -1162,7 +1162,6 @@ YY_RULE_SETUP
         if(i==zone[zone_now].id_list.size()){//如果没定义过，成功创建新id
             zone[zone_now].id_list.push_back(identifier(yytext,zone_now));
             printer("ID",yytext,zone_now);
-
             node->zone=zone_now;
             //id_cnt++;
         }
@@ -1191,20 +1190,20 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 240 "main.l"
+#line 239 "main.l"
 
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 241 "main.l"
+#line 240 "main.l"
 
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 244 "main.l"
+#line 243 "main.l"
 ECHO;
 	YY_BREAK
-#line 1208 "lex.yy.cc"
+#line 1207 "lex.yy.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2209,7 +2208,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 244 "main.l"
+#line 243 "main.l"
 
 
 
