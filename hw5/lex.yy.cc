@@ -522,28 +522,8 @@ char *yytext;
     //为了实现作用域，必须存储作用域的结构，即哪个zone属于哪个zone 
     //zone栈，为了找父节点用 
     stack<int>zone_stack;
-
-    //标识符，包含名称和符号表中的指针
-    struct identifier{
-    	string name;
-    	int no; //作用域的编号
-        VarType type;//类型
-        identifier(){}
-        identifier(string n,int num){
-            name=n;
-            no=num;
-        }
-	};
-
-    //结构体z是zone，每个zone包含一个符号表和一个父节点值
-    struct z{
-        vector<identifier>id_list;
-        int father;
-        z(){
-            father=-1;
-        }
-    }zone[20];
-
+    extern action_zone zone[20];
+    
     //从p节点向上找是否前面定义过标识符id
     int find_zone(int p,string id){
 	    int i;
@@ -569,8 +549,8 @@ char *yytext;
     int zone_switch_flag=0;//是否需要切换作用域（一个id前面有没有int ） 
     bool init_stack=false;
     bool for_flag=false;//for的花括号不影响作用域，是一个特例
-#line 573 "lex.yy.cc"
-#line 574 "lex.yy.cc"
+#line 553 "lex.yy.cc"
+#line 554 "lex.yy.cc"
 
 #define INITIAL 0
 
@@ -787,9 +767,9 @@ YY_DECL
 		}
 
 	{
-#line 67 "main.l"
+#line 47 "main.l"
 
-#line 793 "lex.yy.cc"
+#line 773 "lex.yy.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -849,17 +829,17 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 68 "main.l"
+#line 48 "main.l"
 {cout<<"COMMENT:"<<yytext<<endl;} /* do nothing */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 69 "main.l"
+#line 49 "main.l"
 {cout<<"COMMENT:"<<yytext<<endl;}/* do nothing */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 71 "main.l"
+#line 51 "main.l"
 {
     TreeNode *node = new TreeNode(NODE_BOOL);
     node->bool_val = true;
@@ -869,7 +849,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 77 "main.l"
+#line 57 "main.l"
 {
     TreeNode *node = new TreeNode(NODE_BOOL);
     node->bool_val = false;
@@ -879,7 +859,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 84 "main.l"
+#line 64 "main.l"
 {
     if(init_stack==false){//初始化栈
         zone_stack.push(0);
@@ -891,7 +871,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 92 "main.l"
+#line 72 "main.l"
 {
     if(init_stack==false){
         zone_stack.push(0);
@@ -903,7 +883,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 100 "main.l"
+#line 80 "main.l"
 {
     if(init_stack==false){
         zone_stack.push(0);
@@ -915,22 +895,22 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 109 "main.l"
+#line 89 "main.l"
 return IF;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 110 "main.l"
+#line 90 "main.l"
 return WHILE;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 111 "main.l"
+#line 91 "main.l"
 return ELSE;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 112 "main.l"
+#line 92 "main.l"
 {//注意for里面定义的i作用域变化
     for_flag=true;
     zone_cnt++;     //作用域总数++
@@ -942,132 +922,132 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 120 "main.l"
+#line 100 "main.l"
 return RETURN;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 122 "main.l"
+#line 102 "main.l"
 return PRINTF;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 123 "main.l"
+#line 103 "main.l"
 return SCANF;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 125 "main.l"
+#line 105 "main.l"
 return EQUAL;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 126 "main.l"
+#line 106 "main.l"
 return ASSIGN;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 128 "main.l"
+#line 108 "main.l"
 return ADD;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 129 "main.l"
+#line 109 "main.l"
 return SUB;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 130 "main.l"
+#line 110 "main.l"
 return MUL;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 131 "main.l"
+#line 111 "main.l"
 return DIV;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 132 "main.l"
+#line 112 "main.l"
 return MOD;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 133 "main.l"
+#line 113 "main.l"
 return LARGER;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 134 "main.l"
+#line 114 "main.l"
 return SMALLER;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 135 "main.l"
+#line 115 "main.l"
 return LARGER_EQUAL;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 136 "main.l"
+#line 116 "main.l"
 return SMALLER_EQUAL;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 137 "main.l"
+#line 117 "main.l"
 return NOT_EQUAL;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 138 "main.l"
+#line 118 "main.l"
 return AND;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 139 "main.l"
+#line 119 "main.l"
 return OR;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 140 "main.l"
+#line 120 "main.l"
 return ADD_SELF;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 141 "main.l"
+#line 121 "main.l"
 return SUB_SELF;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 142 "main.l"
+#line 122 "main.l"
 return ADD_ONE;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 143 "main.l"
+#line 123 "main.l"
 return SUB_ONE;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 145 "main.l"
+#line 125 "main.l"
 return NOT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 147 "main.l"
+#line 127 "main.l"
 return GET_ADDR;//取地址
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 149 "main.l"
+#line 129 "main.l"
 return QUOTA;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 150 "main.l"
+#line 130 "main.l"
 return COMMA;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 151 "main.l"
+#line 131 "main.l"
 {
     zone_switch_flag=0;
     return SEMICOLON;
@@ -1075,17 +1055,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 155 "main.l"
+#line 135 "main.l"
 return LPAREN;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 156 "main.l"
+#line 136 "main.l"
 return RPAREN;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 157 "main.l"
+#line 137 "main.l"
 {
     if(for_flag==true){//如果在for后面，作用域不变
         return LBRACE;
@@ -1099,7 +1079,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 167 "main.l"
+#line 147 "main.l"
 {
     if(for_flag==true){
         for_flag=false;//结束for的作用域
@@ -1111,7 +1091,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 176 "main.l"
+#line 156 "main.l"
 {
     TreeNode *node = new TreeNode(NODE_STRING);
     node->string_val = yytext;
@@ -1122,7 +1102,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 184 "main.l"
+#line 164 "main.l"
 {
     TreeNode *node = new TreeNode(NODE_CONST);
     node->int_val = atoi(yytext);
@@ -1133,7 +1113,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 191 "main.l"
+#line 171 "main.l"
 {
     TreeNode* node = new TreeNode(NODE_CHAR);
     node->char_val = yytext[1];
@@ -1144,7 +1124,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 198 "main.l"
+#line 178 "main.l"
 {
     TreeNode *node = new TreeNode(NODE_VAR);
     node->var_name = string(yytext);
@@ -1190,20 +1170,20 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 239 "main.l"
+#line 219 "main.l"
 
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 240 "main.l"
+#line 220 "main.l"
 
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 243 "main.l"
+#line 223 "main.l"
 ECHO;
 	YY_BREAK
-#line 1207 "lex.yy.cc"
+#line 1187 "lex.yy.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2208,7 +2188,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 243 "main.l"
+#line 223 "main.l"
 
 
 

@@ -7,28 +7,8 @@
     //为了实现作用域，必须存储作用域的结构，即哪个zone属于哪个zone 
     //zone栈，为了找父节点用 
     stack<int>zone_stack;
-
-    //标识符，包含名称和符号表中的指针
-    struct identifier{
-    	string name;
-    	int no; //作用域的编号
-        VarType type;//类型
-        identifier(){}
-        identifier(string n,int num){
-            name=n;
-            no=num;
-        }
-	};
-
-    //结构体z是zone，每个zone包含一个符号表和一个父节点值
-    struct z{
-        vector<identifier>id_list;
-        int father;
-        z(){
-            father=-1;
-        }
-    }zone[20];
-
+    extern action_zone zone[20];
+    
     //从p节点向上找是否前面定义过标识符id
     int find_zone(int p,string id){
 	    int i;

@@ -1291,9 +1291,6 @@ State 91
    45     | expr . DIV expr
    46     | expr . MOD expr
 
-    ADD  shift, and go to state 70
-    SUB  shift, and go to state 71
-
     $default  reduce using rule 44 (expr)
 
 
@@ -1305,9 +1302,6 @@ State 92
    45     | expr . DIV expr
    45     | expr DIV expr .
    46     | expr . MOD expr
-
-    ADD  shift, and go to state 70
-    SUB  shift, and go to state 71
 
     $default  reduce using rule 45 (expr)
 
@@ -1321,9 +1315,6 @@ State 93
    46     | expr . MOD expr
    46     | expr MOD expr .
 
-    ADD  shift, and go to state 70
-    SUB  shift, and go to state 71
-
     $default  reduce using rule 46 (expr)
 
 
@@ -1336,6 +1327,10 @@ State 94
    45     | expr . DIV expr
    46     | expr . MOD expr
 
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
+
     $default  reduce using rule 42 (expr)
 
 
@@ -1347,6 +1342,10 @@ State 95
    44     | expr . MUL expr
    45     | expr . DIV expr
    46     | expr . MOD expr
+
+    MUL  shift, and go to state 67
+    DIV  shift, and go to state 68
+    MOD  shift, and go to state 69
 
     $default  reduce using rule 43 (expr)
 

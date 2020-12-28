@@ -1,22 +1,9 @@
 %{
     #include"common.h"
     extern TreeNode * root;
-    VarType now_type=VAR_VOID;
-    struct id{
-        string name;
-        VarType type;
-        id(){
-            name="";
-            type=VAR_VOID;
-        }
-        id(string n,VarType t){
-            name=n;
-            type=t;
-        }
-    };
-    vector<id>v; 
     int yylex();
     int yyerror( char const * );
+    extern action_zone zone[20];
 %}
 %defines
 
@@ -42,8 +29,8 @@
 %right NOT
 %right ADD_ONE SUB_ONE
 %right ADD_SELF SUB_SELF
-%left MUL DIV MOD
 %left ADD SUB
+%left MUL DIV MOD
 %left LARGER SMALLER LARGER_EQUAL SMALLER_EQUAL NOT_EQUAL
 %left EQUAL
 %right ASSIGN
