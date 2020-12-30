@@ -2,8 +2,8 @@
 #include "symbol.h"
 #include "common.h"
 using namespace std;
-string node_type[]={"stmt","type","const","bool","var","op","expr","prog","para","func"};
-string stmt_type[]={"declare","if","while","printf","scanf","for","return"};
+string node_type[]={"stmt","type","const","bool","var","op","expr","prog","para"};
+string stmt_type[]={"declare","if","while","printf","scanf","for","return","func"};
 string op_type[]={"==","!","+","-","*","/","%",">","<",">=","<=","!=","&&","||","+=","-=","++","--"};
 string var_type[]={"int","void","char","string","float","notype"};
 //加入子节点（注意，因为不知道有几个儿子，所以每个节点的child只有一个）
@@ -91,8 +91,6 @@ void TreeNode::printNodeTypeInfo(TreeNode *node){
             cout<<"NODE_EXPR "<<setw(size)<<op_type[node->opType];break;
         case NODE_PARA:
             cout<<"NODE_PARA "<<setw(size)<<var_type[node->varType];break;
-        case NODE_FUNC:
-            cout<<"NODE_FUNC "<<setw(size)<<var_type[node->varType]+"_f";break;
     }
 }
 //输出子节点编号
@@ -262,14 +260,14 @@ void Tree::stmt_get_label(TreeNode *t){
             TreeNode *judge,*stmts;
             judge=t->child;
             stmts=judge->sibling;
-            judge->label.true_label=stmts->label.begin_label= new_label();//L1
-            judge->label.false_label=stmts->label.next_label=t->label.next_label;
-            //judge在物理上的下一块代码，next标签在输出跳转指令时至关重要
-            judge->label.next_label=stmts->label.begin_label;
             if (t->label.next_label == "")
             {
                 t->label.next_label = new_label();//L2
             }
+            judge->label.true_label=stmts->label.begin_label= new_label();//L1
+            judge->label.false_label=stmts->label.next_label=t->label.next_label;
+            //judge在物理上的下一块代码，next标签在输出跳转指令时至关重要
+            judge->label.next_label=stmts->label.begin_label;
             if (t->sibling){
                 t->sibling->label.begin_label = t->label.next_label;
             }
@@ -279,10 +277,9 @@ void Tree::stmt_get_label(TreeNode *t){
         }
         /*node是整个while语句
         
-        L0: judge 正确则L1
-            jmp L2
         L1: stmts
-            jmp L0
+        L0: judge 
+            je L1
         L2:
 
         */
@@ -310,7 +307,7 @@ void Tree::stmt_get_label(TreeNode *t){
                 t->sibling->label.begin_label = t->label.next_label;
             }
 
-            judge->label.next_label=stmts->label.begin_label;
+            judge->label.next_label=t->label.next_label;
             //递归生成
             recursive_get_label(judge);
             recursive_get_label(stmts);
@@ -343,15 +340,22 @@ void Tree::stmt_get_label(TreeNode *t){
             }
             judge->label.false_label=t->label.next_label;
 
-            judge->label.next_label=t->label.next_label;
 
             if (t->sibling){
                 t->sibling->label.begin_label = t->label.next_label;
             }
+            judge->label.next_label=t->label.next_label;
             recursive_get_label(init);
             recursive_get_label(judge);
             recursive_get_label(trans);
             recursive_get_label(stmts);
+            break;
+        }
+	case STMT_FUNC:{
+            TreeNode *stmts=t->child->sibling;
+            for(;stmts;stmts=stmts->sibling){
+                recursive_get_label(stmts);
+            }
             break;
         }
     }
@@ -463,9 +467,6 @@ void Tree::gen_code(TreeNode *root){
 	cout << "\t.text" << endl;
     cout << "\t.globl _start" << endl;
 
-    cout<<"\tpushl\t%ebp"<<endl;
-	cout<<"\tmovl\t%esp, %ebp"<<endl;
-
     get_label();
     TreeNode *p;
     for(p=root->child;p;p=p->sibling){
@@ -533,8 +534,18 @@ void Tree::recursive_gen_code(TreeNode *node){
 所以jne:如果testl为1则跳转；je：如果testl为0则跳转
 */
 void Tree::stmt_gen_code(TreeNode *t){
+    if(t->stmtType==STMT_FUNC){
+        TreeNode *id=t->child;
+        TreeNode *stmts=id->sibling;
+        cout<<id->var_name<<":\n";
+        cout<<"\tpushl\t%ebp"<<endl;
+        cout<<"\tmovl\t%esp, %ebp"<<endl;
 
-    if(t->stmtType==STMT_DECL){//赋值语句，a 或者 a=expr
+        for(;stmts;stmts=stmts->sibling){
+            recursive_gen_code(stmts);
+        }
+    }
+    else if(t->stmtType==STMT_DECL){//赋值语句，a 或者 a=expr
         TreeNode *expr=t->child->sibling;
         if(expr){//右边是表达式
             recursive_gen_code(expr);
@@ -624,14 +635,14 @@ void Tree::deal_with_judge(StmtType stmt_type,TreeNode *judge){
         if(judge->label.begin_label!="")cout<<judge->label.begin_label<<":\n";
         recursive_gen_code(judge);
         //如果跳转标签和下面一块的开始标签相同，就不输出
-        if(judge->label.true_label!="" && judge->label.next_label!=judge->label.true_label){
-            if(stmt_type==STMT_WHILE||stmt_type==STMT_FOR)jump_true(judge);
-            else if(stmt_type==STMT_IF)jump_false(judge);
+        if(judge->label.true_label!="" && judge->label.next_label!=judge->label.true_label)
+        {
+            jump_true(judge);
             cout<<judge->label.true_label<<endl;
         }
-        if(judge->label.false_label!=""&& judge->label.next_label!=judge->label.false_label){
-            if(stmt_type==STMT_WHILE||stmt_type==STMT_FOR)jump_false(judge);
-            else if(stmt_type==STMT_IF)jump_true(judge);
+        if(judge->label.false_label!=""&& judge->label.next_label!=judge->label.false_label)
+        {
+            jump_false(judge);
             cout<<judge->label.false_label<<endl;
         }
     }
@@ -699,7 +710,7 @@ void Tree::expr_gen_code(TreeNode *t){
     else if(t->nodeType==NODE_BOOL){
         //把e1,e2存到eax,edx
         cout<<"\tmovl\t$";
-        print_value(e2);
+        print_value(e1);
         cout<<", %eax\n";
         
         cout<<"\tmovl\t$";
@@ -710,7 +721,7 @@ void Tree::expr_gen_code(TreeNode *t){
     }
 }
 
-void Tree::jump_false(TreeNode *judge){
+void Tree::jump_true(TreeNode *judge){
     if(judge->nodeType==NODE_EXPR){
         cout<<"\ttestl\t%eax, %eax\n";//testl 是测试eax是否为0，
     }
@@ -727,7 +738,7 @@ void Tree::jump_false(TreeNode *judge){
     }
 }
 
-void Tree::jump_true(TreeNode *judge){
+void Tree::jump_false(TreeNode *judge){
     if(judge->nodeType==NODE_EXPR){
         cout<<"\ttestl\t%eax, %eax\n";
         //if和while的跳转语句不同，因为标签不同；for和while相同
