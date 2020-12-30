@@ -110,7 +110,7 @@ void TreeNode::printNodeConnection(TreeNode *p){
 }
 
 //#######################################################################################
-//################################ 下面是lab6 ###########################################
+//################################ 类型检查 ###########################################
 //#######################################################################################
 extern symbol_table symtbl;
 extern action_zone zone[20];
@@ -228,6 +228,7 @@ void Tree::stmt_check(TreeNode *node)
 void Tree::get_label(){
     TreeNode *p=root;
     p->label.begin_label = "_start";
+    //给每个stmt节点提前设置好标签，以便代码生成时直接使用
     for(p=root->child;p;p=p->sibling){
 	    recursive_get_label(p);
     }
@@ -243,23 +244,46 @@ void Tree::recursive_get_label(TreeNode *node){
     if(node->nodeType==NODE_STMT){
         stmt_get_label(node);
     }
-    else if(node->nodeType==NODE_EXPR){
+    else if(node->nodeType==NODE_EXPR||node->nodeType==NODE_BOOL){
         expr_get_label(node);
     }
 }
-//给stmt节点内的各个子节点赋予前后标签(while,if)
+//给stmt的各个子节点赋予前后标签(while,if,for)
+//设定judge的true和false；stmts的begin和next；t的begin和next（如果一个语句的前后有标签，就需要设定）
 void Tree::stmt_get_label(TreeNode *t){
     switch(t->stmtType){
-        /*node是整个while语句
-        while(E){
-            S;
+        case STMT_IF:{//judge不需要true标签
+        /*
+        L0: judge
+            不正确则 L2
+        L1: stmts
+        L2:
+        */
+            TreeNode *judge,*stmts;
+            judge=t->child;
+            stmts=judge->sibling;
+            judge->label.true_label=stmts->label.begin_label= new_label();//L1
+            judge->label.false_label=stmts->label.next_label=t->label.next_label;
+            //judge在物理上的下一块代码，next标签在输出跳转指令时至关重要
+            judge->label.next_label=stmts->label.begin_label;
+            if (t->label.next_label == "")
+            {
+                t->label.next_label = new_label();//L2
+            }
+            if (t->sibling){
+                t->sibling->label.begin_label = t->label.next_label;
+            }
+            recursive_get_label(judge);
+            recursive_get_label(stmts);
+            break;
         }
+        /*node是整个while语句
         
-        begin:  if E goto E.true
-                goto E.false
-        E.true: S
-                goto begin
-        E.false:
+        L0: judge 正确则L1
+            jmp L2
+        L1: stmts
+            jmp L0
+        L2:
 
         */
         case STMT_WHILE:{
@@ -268,16 +292,16 @@ void Tree::stmt_get_label(TreeNode *t){
             stmts=judge->sibling;
             //分配整个循环开始的标签
             if(t->label.begin_label==""){
-                t->label.begin_label=new_label();
+                t->label.begin_label=new_label();//L0
             }
             //循环体的下一条语句是循环的开始
             stmts->label.next_label=t->label.begin_label;
             //如果判断正确，则开始循环体
-            stmts->label.begin_label=judge->label.true_label=new_label();
+            stmts->label.begin_label=judge->label.true_label=new_label();//L1
 
             //分配整个循环结束的标号
             if (t->label.next_label == ""){
-                t->label.next_label = new_label();
+                t->label.next_label = new_label();//L2
             }
             //循环条件的假值标号即为整个循环的下一条语句标号
             judge->label.false_label = t->label.next_label;
@@ -285,40 +309,25 @@ void Tree::stmt_get_label(TreeNode *t){
             if (t->sibling){
                 t->sibling->label.begin_label = t->label.next_label;
             }
+
+            judge->label.next_label=stmts->label.begin_label;
             //递归生成
             recursive_get_label(judge);
             recursive_get_label(stmts);
             break;
         }
-        case STMT_IF:{//没有else。
-        /*
-            judge
-            不正确则 next
-            stmts
-        next:
-        只需要一个标签
-        */
-            TreeNode *judge,*stmts;
-            judge=t->child;
-            stmts=judge->sibling;
-            if (t->label.next_label == ""){
-                t->label.next_label = new_label();
-            }
-            stmts->label.next_label=t->label.next_label;
-            break;
-        }
+
         case STMT_FOR:{
             //for 语句有四个部分：初始化语句，judge，迭代语句trans和stmts
             /*for(init;judge;trans)stmts;
             先去判断judge，如果正确去stmts，然后迭代trans
-                init
-                jmp L1
-            L2: stmts
+            L0: init
+                jmp L2
+            L1: stmts
                 trans
-            L1: judge
-                正确则 L2
-            next:
-            需要三个标签
+            L2: judge
+                正确则 L1
+            L3:
             */
             TreeNode *init,*judge,*trans,*stmts;
             init=t->child;
@@ -326,57 +335,89 @@ void Tree::stmt_get_label(TreeNode *t){
             trans=judge->sibling;
             stmts=trans->sibling;
 
-            init->label.next_label=new_label();
+            judge->label.true_label=new_label();//L1
+            init->label.next_label=new_label();//L2
+
             if (t->label.next_label == ""){
-                t->label.next_label = new_label();
+                t->label.next_label = new_label();//L3
             }
             judge->label.false_label=t->label.next_label;
-            judge->label.true_label=new_label();
 
+            judge->label.next_label=t->label.next_label;
+
+            if (t->sibling){
+                t->sibling->label.begin_label = t->label.next_label;
+            }
+            recursive_get_label(init);
+            recursive_get_label(judge);
+            recursive_get_label(trans);
+            recursive_get_label(stmts);
             break;
         }
     }
 }
-//处理bool表达式标签(&&,||,!,==,<=,>=,<,>,!=)
-void Tree::expr_get_label(TreeNode *node){
-    if(node->nodeType!=NODE_BOOL){
+//处理bool表达式标签(&&,||,!)
+void Tree::expr_get_label(TreeNode *judge){
+    if(judge->nodeType!=NODE_BOOL){
         return;
     }
     TreeNode *e1,*e2;
-    e1=node->child;
+    e1=judge->child;
     e2=e1->sibling;
-    switch (node->opType){
+    //judge的true和false继承给子节点
+    switch (judge->opType){
         //与运算，如果有一个错，则整体错；都对，进入true标签
         /*and代码格式如下
         begin:
-            if e1 is true goto new_label
-            goto false
-        new_label:
-            if e2 is true goto true
-            goto false
+            e1
+            jne false
+            e2
+            jne false
         true:######
         false:######
         */
         case OP_AND:{
-            e1->label.true_label=new_label();
-            e2->label.true_label=node->label.true_label;
-            e1->label.false_label=e2->label.false_label=node->label.false_label;
+            e1->label.true_label=e2->label.begin_label=new_label();
+            e2->label.true_label=judge->label.true_label;
+            e1->label.false_label=e2->label.false_label=judge->label.false_label;
+
+            e1->label.next_label=e2->label.begin_label;
+            e2->label.next_label=judge->label.next_label;
+            expr_get_label(e1);
+            expr_get_label(e2);
             break;
         }
         /*or代码格式如下
         begin:
-            if e1 is true goto true
-            goto new_label
-        new_label:
-            if e2 is true goto true
-            goto false
+            e1
+            je ture
+            e2
+            jne false
         true:######
         false:######
         */
         case OP_OR:{
-            e1->label.true_label=e2->label.true_label=node->label.true_label;
-            e1->label.false_label==new_label();
-            e2->label.false_label=node->label.false_label;
+            e1->label.true_label=e2->label.true_label=judge->label.true_label;
+            e1->label.false_label=e2->label.begin_label=new_label();
+            e2->label.false_label=judge->label.false_label;
+            //定义代码的next标签，在输出跳转指令时至关重要！
+            e1->label.next_label=e2->label.begin_label;
+            e2->label.next_label=judge->label.next_label;
+            expr_get_label(e1);
+            expr_get_label(e2);
+            break;
+        }
+        /*
+        begin:
+            if e1 is true goto false
+        true:#####
+        false:#####
+        */
+        case OP_NOT:{
+            e1->label.true_label=judge->label.false_label;
+            e1->label.false_label=judge->label.true_label;
+            e1->label.next_label=judge->label.next_label;
+            expr_get_label(e1);
             break;
         }
     }
@@ -502,14 +543,9 @@ void Tree::stmt_gen_code(TreeNode *t){
                 cout<<"\tmovl\t$t"<<t->child->sibling->temp_var<<", $_"<<t->child->var_name<<endl;
             }
             else{
-                if(expr->nodeType==NODE_CONST){//是常量
-                    cout<<"\tmovl\t$_";
-                    print_value(expr);
-                    cout<<", %eax\n";
-                }
-                else{//是单个变量
-                    cout<<"\tmovl\t$_"<<expr->var_name<<", %eax\n";
-                }
+                cout<<"\tmovl\t$";
+                print_value(expr);
+                cout<<", %eax\n";
                 cout<<"\tmovl\t%eax ,$_"<<t->child->var_name<<endl;
             }
         }
@@ -518,26 +554,15 @@ void Tree::stmt_gen_code(TreeNode *t){
     else if(t->stmtType==STMT_IF){
         TreeNode *judge=t->child;
         TreeNode *stmts=judge->sibling;
-        recursive_gen_code(judge);
-        if(judge->nodeType==NODE_EXPR){
-            cout<<"\ttestl\t%eax, %eax\n";
-            cout<<"\tje "<<t->label.next_label<<endl;
-            //if和while的跳转语句不同，因为标签不同；for和while相同
+
+        deal_with_judge(STMT_IF,judge);
+        cout<<stmts->label.begin_label<<":\n";
+        for(;stmts;stmts=stmts->sibling){
+            stmt_gen_code(stmts);
         }
-        else if(judge->nodeType==NODE_BOOL){
-            switch(judge->opType){
-                case OP_EQUAL:{cout<<"\tjne\t"<<judge->label.true_label<<endl;break;}
-                case OP_LARGER:{cout<<"\tjle\t"<<judge->label.true_label<<endl;break;}
-                case OP_LARGER_EQUAL:{cout<<"\tjl\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER:{cout<<"\tjge\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER_EQUAL:{cout<<"\tjg\t"<<judge->label.true_label<<endl;break;}
-                case OP_NOT_EQUAL:{cout<<"\tje "<<judge->label.true_label<<endl;break;}
-            }
-        }
-        recursive_gen_code(stmts);
+        
         cout<<t->label.next_label<<":\n";
     } 
-
     //while语句先生成judge，然后jump到judge的next
     else if(t->stmtType==STMT_WHILE){
         TreeNode *judge=t->child;
@@ -548,24 +573,9 @@ void Tree::stmt_gen_code(TreeNode *t){
         recursive_gen_code(stmts);
 
         cout<<t->label.begin_label<<":\n";    
+
         //接下来需要对judge按照与或非符号进行划分，即遍历语法树，并生成judge的代码
-        recursive_gen_code(judge);
-        //如果judge是expr，用testl语句
-        if(judge->nodeType==NODE_EXPR){
-            cout<<"\ttestl\t%eax, %eax\n";//testl 是测试eax是否为0，
-            cout<<"\tjne "<<judge->label.true_label<<endl;//testl发现操作数为1，继续循环
-        }
-        //如果judge是bool_expr，用cmpl语句，这在expr_gen_code里面定义
-        else if(judge->nodeType==NODE_BOOL){
-            switch(judge->opType){
-                case OP_EQUAL:{cout<<"\tje\t"<<judge->label.true_label<<endl;break;}
-                case OP_LARGER:{cout<<"\tjg\t"<<judge->label.true_label<<endl;break;}//j的类型与符号相同
-                case OP_LARGER_EQUAL:{cout<<"\tjge\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER:{cout<<"\tjl\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER_EQUAL:{cout<<"\tjle\t"<<judge->label.true_label<<endl;break;}
-                case OP_NOT_EQUAL:{cout<<"\tjne "<<judge->label.true_label<<endl;break;}
-            }
-        }
+        deal_with_judge(STMT_WHILE,judge);
         cout<<t->label.next_label<<":\n";
     }
     else if(t->stmtType==STMT_FOR){
@@ -581,27 +591,51 @@ void Tree::stmt_gen_code(TreeNode *t){
         recursive_gen_code(stmts);
         recursive_gen_code(trans);
         cout<<init->label.next_label<<":\n";
-        recursive_gen_code(judge);
-        //如果judge是expr，用testl语句
-        if(judge->nodeType==NODE_EXPR){
-            cout<<"\ttestl\t%eax, %eax\n";//testl 是测试eax是否为0，
-            cout<<"\tjne "<<judge->label.true_label<<endl;//testl发现操作数为1，继续循环
-        }
-        //如果judge是bool_expr，用cmpl语句，这在expr_gen_code里面定义
-        else if(judge->nodeType==NODE_BOOL){
-            switch(judge->opType){
-                case OP_EQUAL:{cout<<"\tje\t"<<judge->label.true_label<<endl;break;}
-                case OP_LARGER:{cout<<"\tjg\t"<<judge->label.true_label<<endl;break;}//j的类型与符号相同
-                case OP_LARGER_EQUAL:{cout<<"\tjge\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER:{cout<<"\tjl\t"<<judge->label.true_label<<endl;break;}
-                case OP_SMALLER_EQUAL:{cout<<"\tjle\t"<<judge->label.true_label<<endl;break;}
-                case OP_NOT_EQUAL:{cout<<"\tjne "<<judge->label.true_label<<endl;break;}
-            }
-        }
+
+        deal_with_judge(STMT_FOR,judge);
         cout<<t->label.next_label<<":\n";
+    }
+    else if(t->stmtType==STMT_RETURN){
+        TreeNode *expr=t->child;
+        cout<<"\tmovl\t$";
+        print_value(expr);
+        cout<<", %eax\n";
+        cout<<"\tpopl\t%ebp\n";
     }
 }
 
+//所属stmt的类型，judge节点
+void Tree::deal_with_judge(StmtType stmt_type,TreeNode *judge){
+    TreeNode *e1=judge->child;
+    TreeNode *e2=e1->sibling;
+    if(judge->opType==OP_NOT){
+        deal_with_judge(stmt_type,e1);
+    }
+    else if(judge->opType==OP_OR){
+        deal_with_judge(stmt_type,e1);
+        deal_with_judge(stmt_type,e2);
+    }
+    else if(judge->opType==OP_AND){
+        deal_with_judge(stmt_type,e1);
+        deal_with_judge(stmt_type,e2);
+    }
+    else if(judge->nodeType==NODE_BOOL){
+        //输出这一块的开始标签
+        if(judge->label.begin_label!="")cout<<judge->label.begin_label<<":\n";
+        recursive_gen_code(judge);
+        //如果跳转标签和下面一块的开始标签相同，就不输出
+        if(judge->label.true_label!="" && judge->label.next_label!=judge->label.true_label){
+            if(stmt_type==STMT_WHILE||stmt_type==STMT_FOR)jump_true(judge);
+            else if(stmt_type==STMT_IF)jump_false(judge);
+            cout<<judge->label.true_label<<endl;
+        }
+        if(judge->label.false_label!=""&& judge->label.next_label!=judge->label.false_label){
+            if(stmt_type==STMT_WHILE||stmt_type==STMT_FOR)jump_false(judge);
+            else if(stmt_type==STMT_IF)jump_true(judge);
+            cout<<judge->label.false_label<<endl;
+        }
+    }
+}
 //生成各种表达式的汇编代码
 void Tree::expr_gen_code(TreeNode *t){
     TreeNode *e1,*e2;
@@ -619,65 +653,41 @@ void Tree::expr_gen_code(TreeNode *t){
     
     if(t->opType==OP_ADD){//e1+e2
         //先判断e1的类型
-        if (e1->nodeType == NODE_VAR){//变量
-            cout << "\tmovl\t$" << "_" << e1->var_name<< ", %eax" <<endl;;
-        }
-        else if (e1->nodeType == NODE_CONST){//常量
-            cout << "\tmovl\t$";
-            print_value(e1);//$后面就是常量的值
-            cout<< ", %eax" <<endl;//把e1结果赋给eax
-        }
+        cout << "\tmovl\t$";
+        print_value(e1);//$后面就是常量的值
+        cout<< ", %eax" <<endl;//把e1结果赋给eax
+        
         //判断e2的类型
-        if (e2->nodeType == NODE_VAR){
-            cout << "\taddl\t$"<< "_" << e2->var_name<< ", %eax" << endl;;
-        }
-        else if (e2->nodeType == NODE_CONST){
-            cout << "\taddl\t$";
-            print_value(e2);
-            cout << ", %eax" << endl;
-        }
+        cout << "\taddl\t$";
+        print_value(e2);
+        cout << ", %eax" << endl;
+        
         cout << "\tmovl\t%eax, $t" << t->temp_var << endl;//每计算一步，把eax赋给一个临时变量
     }
     else if(t->opType==OP_SUB){//e1-e2
         //先判断e1的类型
-        if (e1->nodeType == NODE_VAR){//变量
-            cout << "\tmovl\t$" << "_" << e1->var_name<< ", %eax" <<endl;;
-        }
-        else if (e1->nodeType == NODE_CONST){//常量
-            cout << "\tmovl\t$";
-            print_value(e1);//$后面就是常量的值
-            cout<< ", %eax" <<endl;//把e1结果赋给eax
-        }
+        cout << "\tmovl\t$";
+        print_value(e1);//$后面就是常量的值
+        cout<< ", %eax" <<endl;//把e1结果赋给eax
+
         //判断e2的类型
-        if (e2->nodeType == NODE_VAR){
-            cout << "\tsubl\t$"<< "_" << e2->var_name<< ", %eax" << endl;;
-        }
-        else if (e2->nodeType == NODE_CONST){
-            cout << "\tsubl\t$";
-            print_value(e2);
-            cout << ", %eax" << endl;
-        }
+        cout << "\tsubl\t$";
+        print_value(e2);
+        cout << ", %eax" << endl;
+        
         cout << "\tmovl\t%eax, $t" << t->temp_var << endl;//每计算一步，把eax赋给一个临时变量
     }
     else if(t->opType==OP_MUL){//e1*e2
         //先判断e1的类型
-        if (e1->nodeType == NODE_VAR){//变量
-            cout << "\tmovl\t$" << "_" << e1->var_name<< ", %eax" <<endl;;
-        }
-        else if (e1->nodeType == NODE_CONST){//常量
-            cout << "\tmovl\t$";
-            print_value(e1);//$后面就是常量的值
-            cout<< ", %eax" <<endl;//把e1结果赋给eax
-        }
+        cout << "\tmovl\t$";
+        print_value(e1);//$后面就是常量的值
+        cout<< ", %eax" <<endl;//把e1结果赋给eax
+        
         //判断e2的类型
-        if (e2->nodeType == NODE_VAR){
-            cout << "\tmul\t$"<< "_" << e2->var_name<< ", %eax" << endl;;
-        }
-        else if (e2->nodeType == NODE_CONST){
-            cout << "\tmul\t$";
-            print_value(e2);
-            cout << ", %eax" << endl;
-        }
+        cout << "\tmul\t$";
+        print_value(e2);
+        cout << ", %eax" << endl;
+        
         cout << "\tmovl\t%eax, $t" << t->temp_var << endl;//每计算一步，把eax赋给一个临时变量
     }
 
@@ -688,29 +698,58 @@ void Tree::expr_gen_code(TreeNode *t){
     //bool表达式的代码除了判断语句都一样，但判断语句与if,while,for的类型有关，所以写在stmt_gen_code里面
     else if(t->nodeType==NODE_BOOL){
         //把e1,e2存到eax,edx
-        if(e1->nodeType==NODE_CONST){
-            cout<<"\tmovl\t$_";
-            print_value(e2);
-            cout<<", %eax\n";
-        }
-        else{
-            cout<<"\tmovl\t$"<<e1->var_name<<", %eax\n";
-        }
-        if(e2->nodeType==NODE_CONST){
-            cout<<"\tmovl\t$_";
-            print_value(e2);
-            cout<<", %edx\n";
-        }
-        else{
-            cout<<"\tmovl\t$"<<e2->var_name<<", %edx\n";
-        }
+        cout<<"\tmovl\t$";
+        print_value(e2);
+        cout<<", %eax\n";
+        
+        cout<<"\tmovl\t$";
+        print_value(e2);
+        cout<<", %edx\n";
+        
         cout<<"\tcmpl\t"<<"%eax, %edx\n";
     }
 }
 
-
-void Tree::print_value(TreeNode *e1){//打印一个节点的值
-    if(e1->varType==VAR_INTEGER)cout << e1->int_val;
-    else if(e1->varType==VAR_FLOAT)cout << e1->float_val;
+void Tree::jump_false(TreeNode *judge){
+    if(judge->nodeType==NODE_EXPR){
+        cout<<"\ttestl\t%eax, %eax\n";//testl 是测试eax是否为0，
+    }
+    //如果judge是bool_expr，用cmpl语句，这在expr_gen_code里面定义
+    else if(judge->nodeType==NODE_BOOL){
+        switch(judge->opType){
+            case OP_EQUAL:{cout<<"\tje\t";break;}
+            case OP_LARGER:{cout<<"\tjg\t";break;}//j的类型与符号相同
+            case OP_LARGER_EQUAL:{cout<<"\tjge\t";break;}
+            case OP_SMALLER:{cout<<"\tjl\t";break;}
+            case OP_SMALLER_EQUAL:{cout<<"\tjle\t";break;}
+            case OP_NOT_EQUAL:{cout<<"\tjne\t";break;}
+        }
+    }
 }
 
+void Tree::jump_true(TreeNode *judge){
+    if(judge->nodeType==NODE_EXPR){
+        cout<<"\ttestl\t%eax, %eax\n";
+        //if和while的跳转语句不同，因为标签不同；for和while相同
+    }
+    else if(judge->nodeType==NODE_BOOL){
+        switch(judge->opType){
+            case OP_EQUAL:{cout<<"\tjne\t";break;}
+            case OP_LARGER:{cout<<"\tjle\t";break;}
+            case OP_LARGER_EQUAL:{cout<<"\tjl\t";break;}
+            case OP_SMALLER:{cout<<"\tjge\t";break;}
+            case OP_SMALLER_EQUAL:{cout<<"\tjg\t";break;}
+            case OP_NOT_EQUAL:{cout<<"\tje\t";break;}
+        }
+    }
+}
+
+void Tree::print_value(TreeNode *e1){//打印一个节点的值
+    if (e1->nodeType == NODE_VAR){//变量
+        cout <<"_"<< e1->var_name;
+    }
+    else{
+        if(e1->varType==VAR_INTEGER)cout << e1->int_val;
+        else if(e1->varType==VAR_FLOAT)cout << e1->float_val;
+    }
+}
