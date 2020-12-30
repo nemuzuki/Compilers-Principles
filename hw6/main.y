@@ -266,6 +266,9 @@ expr
     | CHAR_VAL {$$=$1;}
     | STRING_VAL {$$=$1;}
     | equation {$$=$1;}
+    | LPAREN expr RPAREN {//这里可能会warning: 1 shift/reduce conflict
+        $$=$2;
+    }
     | expr ADD expr {
         TreeNode *node=new TreeNode(NODE_EXPR);
         node->opType=OP_ADD;
@@ -316,7 +319,14 @@ expr
         TreeNode *node=new TreeNode(NODE_EXPR);
         node->opType=OP_SUB;
         node->varType=Notype;
-        node->addChild($1);//负号也作为子节点
+        node->addChild($2);
+        node->lineno=$2->lineno;
+        $$=node;  
+    }
+    | ADD expr %prec UMINUS {//前面是正号的情况
+        TreeNode *node=new TreeNode(NODE_EXPR);
+        node->opType=OP_ADD;
+        node->varType=Notype;
         node->addChild($2);
         node->lineno=$2->lineno;
         $$=node;  
