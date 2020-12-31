@@ -1,4 +1,4 @@
-%{  //æ³¨æ„%leftçš„åœ°æ–¹è¶Šé åŽå®šä¹‰çš„è¿ç®—ä¼˜å…ˆçº§è¶Šé«˜ï¼
+%{  //×¢Òâ%leftµÄµØ·½Ô½¿¿ºó¶¨ÒåµÄÔËËãÓÅÏÈ¼¶Ô½¸ß£¡
     #include"common.h"
     extern TreeNode * root;
     int yylex();
@@ -51,8 +51,10 @@ statements
     | statements statement{$$=$1;$$->addSibling($2);}
     ;
 statement
-    : LBRACE statements RBRACE {//èŠ±æ‹¬å·ï¼Œè¿™ä¸€æ¡è‡³å…³é‡è¦ï¼Œå†³å®šäº†ä½œç”¨åŸŸ
-        $$=$2;
+    : LBRACE statements RBRACE {//»¨À¨ºÅ£¬ÕâÒ»ÌõÖÁ¹ØÖØÒª£¬¾ö¶¨ÁË×÷ÓÃÓò
+        TreeNode *node=new TreeNode(NODE_STMTS);
+        node->addChild($2);
+        $$=node;
     }
     | function {$$=$1;}
     | type instruction SEMICOLON{//int a=2;
@@ -67,7 +69,7 @@ statement
     | while_statement {$$=$1;}
     | for_statement {$$=$1;}
     | return_statement {$$=$1;}
-    | equation SEMICOLON {$$=$1;}
+    | self_add SEMICOLON {$$=$1;}
     ;
 
 instruction
@@ -174,24 +176,30 @@ printf_statement
         node->addChild($5);
         $$=node;   
     } 
+    | PRINTF LPAREN STRING_VAL RPAREN SEMICOLON {//printf("hello, %d\n");
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_PRINTF;
+        node->addChild($3);
+        $$=node;   
+    } 
     ;
 bool_expr
     : TRUE {
-        $$=$1;//trueå’ŒfalseèŠ‚ç‚¹çš„ä¿¡æ¯åœ¨lexç¨‹åºé‡Œé¢å®šä¹‰äº†
+        $$=$1;//trueºÍfalse½ÚµãµÄÐÅÏ¢ÔÚlex³ÌÐòÀïÃæ¶¨ÒåÁË
     }
     | FALSE {$$=$1;}
-    | expr {//å•ç‹¬ä¸€ä¸ªè¡¨è¾¾å¼ä¹Ÿå¯ä»¥ï¼Œå’Œ0æ¯”è¾ƒ
+    | expr {//µ¥¶ÀÒ»¸ö±í´ïÊ½Ò²¿ÉÒÔ£¬ºÍ0±È½Ï
         $$=$1;
     }
-    | LPAREN bool_expr RPAREN {//è¿™é‡Œå¯èƒ½ä¼šwarning: 1 shift/reduce conflict
+    | LPAREN bool_expr RPAREN {//ÕâÀï¿ÉÄÜ»áwarning: 1 shift/reduce conflict
         $$=$2;
     }
-    | expr EQUAL expr { //a+b==cï¼Œæ•´ä¸ªè¡¨è¾¾å¼çš„ç±»åž‹åº”è¯¥æ˜¯å¸ƒå°”
+    | expr EQUAL expr { //a+b==c£¬Õû¸ö±í´ïÊ½µÄÀàÐÍÓ¦¸ÃÊÇ²¼¶û
         TreeNode *node=new TreeNode(NODE_BOOL);
         node->opType=OP_EQUAL;
         node->addChild($1);
         node->addChild($3);
-        node->lineno=$1->lineno;//å¾—åˆ°exprçš„è¡Œå·
+        node->lineno=$1->lineno;//µÃµ½exprµÄÐÐºÅ
         $$=node;
     }
     | expr LARGER expr { //a+b>c
@@ -265,17 +273,16 @@ expr
     | FLOAT_VAL {$$=$1;}
     | CHAR_VAL {$$=$1;}
     | STRING_VAL {$$=$1;}
-    | equation {$$=$1;}
-    | LPAREN expr RPAREN {//è¿™é‡Œå¯èƒ½ä¼šwarning: 1 shift/reduce conflict
+    | LPAREN expr RPAREN {//ÕâÀï¿ÉÄÜ»áwarning: 1 shift/reduce conflict
         $$=$2;
     }
     | expr ADD expr {
         TreeNode *node=new TreeNode(NODE_EXPR);
         node->opType=OP_ADD;
-        node->varType=Notype;//çŽ°åœ¨è¿˜ä¸çŸ¥é“ç±»åž‹ï¼Œåœ¨ç±»åž‹æ£€æŸ¥æ—¶èµ‹äºˆ
+        node->varType=Notype;//ÏÖÔÚ»¹²»ÖªµÀÀàÐÍ£¬ÔÚÀàÐÍ¼ì²éÊ±¸³Óè
         node->addChild($1);
         node->addChild($3);
-        node->lineno=$1->lineno;//æ•´ä¸ªexprèŠ‚ç‚¹çš„è¡Œå·ç”±å­è¡¨è¾¾å¼çš„è¡Œå·å†³å®š
+        node->lineno=$1->lineno;//Õû¸öexpr½ÚµãµÄÐÐºÅÓÉ×Ó±í´ïÊ½µÄÐÐºÅ¾ö¶¨
         $$=node;   
     }
     | expr SUB expr {
@@ -315,7 +322,7 @@ expr
         $$=node;   
     }
    
-    | SUB expr %prec UMINUS {//å‰é¢æ˜¯è´Ÿå·çš„æƒ…å†µ
+    | SUB expr %prec UMINUS {//Ç°ÃæÊÇ¸ººÅµÄÇé¿ö
         TreeNode *node=new TreeNode(NODE_EXPR);
         node->opType=OP_SUB;
         node->varType=Notype;
@@ -323,7 +330,7 @@ expr
         node->lineno=$2->lineno;
         $$=node;  
     }
-    | ADD expr %prec UMINUS {//å‰é¢æ˜¯æ­£å·çš„æƒ…å†µ
+    | ADD expr %prec UMINUS {//Ç°ÃæÊÇÕýºÅµÄÇé¿ö
         TreeNode *node=new TreeNode(NODE_EXPR);
         node->opType=OP_ADD;
         node->varType=Notype;
@@ -333,39 +340,39 @@ expr
     }
     ;
 
-equation
-    : ID ADD_SELF expr { //a+=b
-        TreeNode *node=new TreeNode(NODE_EXPR);
+self_add
+    : ID ADD_SELF expr { //a+=b£¬ÊÇÒ»ÖÖstmt£¡
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL;
         node->opType=OP_ADD_SELF;
         node->addChild($1);
-        node->addChild($2);//å•ç›®è¿ç®—ç¬¦ä½œä¸ºèŠ‚ç‚¹ï¼Œä»£ç ç”Ÿæˆæ—¶ä¸éœ€è¦ä¸´æ—¶å˜é‡
         node->addChild($3);
         $$=node;   
     }
-    | ID SUB_SELF expr{//a-=b
-        TreeNode *node=new TreeNode(NODE_EXPR);
+    | ID SUB_SELF expr{ //a-=b
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL;
         node->opType=OP_SUB_SELF;
         node->addChild($1);
-        node->addChild($2);
         node->addChild($3);
         $$=node;   
     }
     | ID ADD_ONE {//a++
-        TreeNode *node=new TreeNode(NODE_EXPR);
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL;
         node->opType=OP_ADD_ONE;
         node->addChild($1);
-        node->addChild($2);
         $$=node;  
     }
     | ID SUB_ONE {//a--
-        TreeNode *node=new TreeNode(NODE_EXPR);
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL;
         node->opType=OP_SUB_ONE;
         node->addChild($1);
-        node->addChild($2);
         $$=node;  
     }
 type
-    : INT {//è¿™ä»£è¡¨"int"è¿™ä¸‰ä¸ªå­—æ¯
+    : INT {//Õâ´ú±í"int"ÕâÈý¸ö×ÖÄ¸
         TreeNode *node=new TreeNode(NODE_TYPE);
         node->varType=VAR_INTEGER;
         $$=node; 
@@ -396,7 +403,7 @@ parameter_list
     ;
 parameter
     : type ID { //int a
-        TreeNode *node=new TreeNode(NODE_PARA);//å‚æ•°ç±»åž‹
+        TreeNode *node=new TreeNode(NODE_PARA);//²ÎÊýÀàÐÍ
         node->varType=$1->varType;
         node->addChild($1);
         node->addChild($2);
@@ -406,16 +413,16 @@ parameter
 function
     : type ID LPAREN parameter_list RPAREN statement{        //int f(int a,int b){}
         TreeNode *node=new TreeNode(NODE_STMT);
-        node->stmtType=STMT_FUNC;//å‡½æ•°ç±»åž‹
+        node->stmtType=STMT_FUNC;//º¯ÊýÀàÐÍ
         node->varType=$1->varType;
         node->addChild($2);
         node->addChild($4);
         node->addChild($6);
         $$=node;
     }
-    | type ID LPAREN RPAREN statement{   //int f()ï¼Œä¸è®©paralist->ç©ºï¼Œé¿å…ä½¿ç”¨epsilon
+    | type ID LPAREN RPAREN statement{   //int f()£¬²»ÈÃparalist->¿Õ£¬±ÜÃâÊ¹ÓÃepsilon
         TreeNode *node=new TreeNode(NODE_STMT);
-        node->stmtType=STMT_FUNC;//å‡½æ•°ç±»åž‹
+        node->stmtType=STMT_FUNC;//º¯ÊýÀàÐÍ
         node->varType=$1->varType;
         node->addChild($2);
         node->addChild($5);
