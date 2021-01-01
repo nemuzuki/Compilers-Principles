@@ -3,7 +3,7 @@
 #include "common.h"
 using namespace std;
 string node_type[]={"stmt","type","const","bool","var","op","expr","prog","para","stmts"};
-string stmt_type[]={"declare","if","while","printf","scanf","for","return","func"};
+string stmt_type[]={"declare","if","while","printf","scanf","for","return","func","decl_char"};
 string op_type[]={"==","!","+","-","*","/","%",">","<",">=","<=","!=","&&","||","+=","-=","++","--"};
 string var_type[]={"int","void","char","string","float","notype"};
 //加入子节点（注意，因为不知道有几个儿子，所以每个节点的child只有一个）
@@ -266,12 +266,30 @@ void Tree::stmt_get_label(TreeNode *t){
             TreeNode *id=t->child;
             int i;
             for(i=0;i<varq_len;++i){
-                if(varq[i]==id->var_name){
+                if(varq[i]->var_name==id->var_name){
                     break;
                 }
             }
             if(i==varq_len){
-                varq[varq_len++]=id->var_name;//所有变量当成全局变量
+                varq[varq_len++]=id;//所有变量当成全局变量
+            }
+
+            //连等
+            if(id->sibling && id->sibling->nodeType==NODE_STMT){
+                stmt_get_label(id->sibling);
+            }
+            break;
+        }
+        case STMT_DECL_CHAR:{
+            TreeNode *id=t->child;
+            int i;
+            for(i=0;i<varq_len;++i){
+                if(varq[i]->var_name==id->var_name){
+                    break;
+                }
+            }
+            if(i==varq_len){
+                varq[varq_len++]=id;//所有变量当成全局变量
             }
             break;
         }
@@ -580,7 +598,12 @@ void Tree::gen_decl(){
 
     //声明语句.comm	a,4,4
     for(int i=0;i<varq_len;++i){
-        cout<<"\t.comm "<<varq[i]<<",4,4"<<endl;
+        if(varq[i]->varType==VAR_INTEGER){
+            cout<<"\t.comm "<<varq[i]->var_name<<",4,4"<<endl;
+        }
+        else if(varq[i]->varType==VAR_CHAR){
+            cout<<"\t.comm "<<varq[i]->var_name<<",1,1"<<endl;
+        }
     }
 	//打印临时变量
 	for (int i = 0; i < temp_var_seq; i++)
@@ -674,21 +697,42 @@ void Tree::stmt_gen_code(TreeNode *t){
             cout<<"\tsubl\t$1, "<<t->child->var_name<<endl;
         }
         else if(expr){//a=expr
-            recursive_gen_code(expr);
-            //把表达式对应的临时变量赋给左边
-            if(expr->child){//是表达式
-                cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
-                cout<<"\tmovl\t%eax, "<<t->child->var_name<<endl;
+            TreeNode *id=t->child;
+            //连等，先找到最末的表达式
+            while(expr->child && expr->nodeType==NODE_STMT){
+                expr=expr->child->sibling;
             }
-            else{//是id或者常数
-                cout<<"\tmovl\t";
-                print_value(expr);
-                cout<<", %eax\n";
-                cout<<"\tmovl\t%eax, "<<t->child->var_name<<endl;
+            recursive_gen_code(expr);
+            //把表达式对应的临时变量赋给左边的每个id
+            for(;id;id=id->sibling->child){
+                if(expr->child){//最右是表达式
+                    cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
+                    cout<<"\tmovl\t%eax, "<<id->var_name<<endl;
+                }
+                else{//是id或者常数
+                    cout<<"\tmovl\t";
+                    print_value(expr);
+                    cout<<", %eax\n";
+                    cout<<"\tmovl\t%eax, "<<id->var_name<<endl;
+                }
             }
         }
     }
 
+    else if(t->stmtType==STMT_DECL_CHAR){//字符赋值
+        /*
+        movb	$57, s
+        movb	s, %al
+        movsbl	%al, %eax
+        */
+        TreeNode *id,*value;
+        id=t->child;
+        value=id->sibling;
+        cout<<"\tmovb\t";
+        print_value(value);
+        cout<<", "<<id->var_name<<endl;
+
+    }
     else if(t->stmtType==STMT_IF){
         TreeNode *judge,*stmts,*else_stmts;
         judge=t->child;
@@ -764,6 +808,7 @@ void Tree::stmt_gen_code(TreeNode *t){
         cout<<"\tcall\tscanf\n";
         cout<<"\taddl\t$16, %esp\n";
     }
+
     else if(t->stmtType==STMT_PRINTF){
         /*
         subl	$8, %esp
@@ -771,20 +816,39 @@ void Tree::stmt_gen_code(TreeNode *t){
         pushl	$.LC0
         call	printf
         addl	$16, %esp
+
+	    movb	t, %al
+        movsbl	%al, %eax
+        subl	$12, %esp
+        pushl	%eax
+        call	putchar
+        addl	$16, %esp
         */
         TreeNode *str,*id;
         str=t->child;
         id=str->sibling;
-        cout<<"\tsubl\t$8, %esp\n";//先让栈顶-8，留出两个空间，才能压栈
-        cout<<"\tpushl\t";
-        if(id)print_value(id);//printf有两个参数
-        else{
-            cout<<"%eax";
+        VarType id_type=find_id_type(id);
+        if(id==NULL ||id_type==VAR_INTEGER){
+            cout<<"\tsubl\t$8, %esp\n";//先让栈顶-8，留出两个空间，才能压栈
+            cout<<"\tpushl\t";
+            if(id)print_value(id);//printf有两个参数
+            else{
+                cout<<"%eax";
+            }
+            cout<<endl;
+            cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//字符串的标签
+            cout<<"\tcall\tprintf\n";
+            cout<<"\taddl\t$16, %esp\n";
         }
-        cout<<endl;
-        cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//字符串的标签
-        cout<<"\tcall\tprintf\n";
-        cout<<"\taddl\t$16, %esp\n";
+        else if(id_type==VAR_CHAR){
+
+            cout<<"\tmovb\t"<<id->var_name<<", %al\n";
+            cout<<"\tmovsbl\t%al, %eax\n";
+            cout<<"\tsubl\t$12, %esp\n";
+            cout<<"\tpushl\t%eax"<<endl;
+            cout<<"\tcall\tputchar\n";
+            cout<<"\taddl\t$16, %esp\n";
+        }
     }
 }
 
@@ -973,6 +1037,6 @@ void Tree::print_value(TreeNode *e1){
     else if(e1->nodeType==NODE_CONST){
         cout<<"$";
         if(e1->varType==VAR_INTEGER)cout << e1->int_val;
-        else if(e1->varType==VAR_FLOAT)cout << e1->float_val;
+        else if(e1->varType==VAR_CHAR)cout << (int)e1->char_val;
     }
 }

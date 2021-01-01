@@ -33,7 +33,8 @@ enum StmtType{
     STMT_SCANF,
     STMT_FOR,
     STMT_RETURN,
-    STMT_FUNC
+    STMT_FUNC,
+    STMT_DECL_CHAR//字符赋值
 };
 
 
@@ -141,7 +142,6 @@ struct str_node{
         no=b;
     }
 };
-
 //树结构
 struct Tree{
     TreeNode *root=nullptr;
@@ -181,7 +181,7 @@ struct Tree{
     //专门存字符串的队列，用于printf和scanf
     queue<str_node>strq;
     //存变量的队列，所有全局变量
-    string varq[20];
+    TreeNode *varq[20];
     int varq_len=0;
 };
 
