@@ -76,6 +76,9 @@ instruction
     : instruction_element{
         $$=$1;  
     }
+    | char_instruction{
+        $$=$1;
+    }
     | instruction COMMA instruction_element{
         $$=$1;
         $$->addSibling($3);
@@ -95,8 +98,23 @@ instruction_element
         node->addChild($3);
         $$=node;  
     }
+    | ID ASSIGN instruction_element{//Á¬µÈ£¬a=b=3
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL;
+        node->addChild($1);
+        node->addChild($3);
+        $$=node;
+    }
     ;
-
+char_instruction
+    : ID ASSIGN CHAR_VAL{
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_DECL_CHAR;
+        node->addChild($1);
+        node->addChild($3);
+        $$=node;  
+    }
+    ;
 if_else_statement
     : IF LPAREN bool_expr RPAREN statement %prec LOWER_THEN_ELSE {
         TreeNode *node=new TreeNode(NODE_STMT);
