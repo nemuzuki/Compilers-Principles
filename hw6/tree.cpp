@@ -650,8 +650,7 @@ void Tree::stmt_gen_code(TreeNode *t){
 
         cout<<"\tpushl\t%ebp"<<endl;
         cout<<"\tmovl\t%esp, %ebp"<<endl;
-        cout<<"\tpushl\t%ecx\n";
-
+        cout<<"\tpushl\t%ecx"<<endl;
         for(TreeNode *stmt=stmts->child;stmt;stmt=stmt->sibling){
             recursive_gen_code(stmt);
         }
@@ -703,8 +702,8 @@ void Tree::stmt_gen_code(TreeNode *t){
                 expr=expr->child->sibling;
             }
             recursive_gen_code(expr);
-            //把表达式对应的临时变量赋给左边的每个id
-            for(;id;id=id->sibling->child){
+            //把表达式对应的临时变量赋给左边的每个id，一定小心空指针
+            for(;id->sibling;id=id->sibling->child){
                 if(expr->child){//最右是表达式
                     cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
                     cout<<"\tmovl\t%eax, "<<id->var_name<<endl;
@@ -827,11 +826,16 @@ void Tree::stmt_gen_code(TreeNode *t){
         TreeNode *str,*id;
         str=t->child;
         id=str->sibling;
-        VarType id_type=find_id_type(id);
+        VarType id_type=Notype;
+        if(id){
+            id_type=find_id_type(id);
+        }
         if(id==NULL ||id_type==VAR_INTEGER){
             cout<<"\tsubl\t$8, %esp\n";//先让栈顶-8，留出两个空间，才能压栈
             cout<<"\tpushl\t";
-            if(id)print_value(id);//printf有两个参数
+            if(id){
+                print_value(id);//printf有两个参数
+            }
             else{
                 cout<<"%eax";
             }
