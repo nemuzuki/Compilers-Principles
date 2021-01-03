@@ -200,6 +200,14 @@ printf_statement
         node->addChild($3);
         $$=node;   
     } 
+    | PRINTF LPAREN STRING_VAL COMMA ID COMMA ID RPAREN SEMICOLON {//printf("hello, %d, %d\n",a,b);两个参数
+        TreeNode *node=new TreeNode(NODE_STMT);
+        node->stmtType=STMT_PRINTF;
+        node->addChild($3);
+        node->addChild($5);
+        node->addChild($7);
+        $$=node;   
+    } 
     ;
 bool_expr
     : TRUE {
