@@ -24,9 +24,11 @@
 		return -1;
 	}
     void printer(string a,string b){
+        return;
         cerr<<setw(8)<<a<<setw(8)<<b<<endl;
     }
     void printer(string a,string b,int c,string type){
+        return;
         cerr<<setw(8)<<a<<setw(8)<<b<<setw(8)<<c<<setw(8)<<type<<endl;
     }
     int zone_cnt=0;//zone总数 
@@ -36,7 +38,7 @@
     bool init_stack=false;//栈初始化
     bool for_flag=false;//for的花括号不影响作用域，是一个特例
 
-    int now_line=0;//当前行数
+    int now_line=1;//当前行数
 
     string last_type;//最近遇到的type关键字，作为变量定义时的属性。
 %}
@@ -136,7 +138,6 @@ WHITE [\t ]
 
 "==" return EQUAL;
 "=" {
-    zone_switch_flag=0;//等号右边的不用检查是否定义过
     return ASSIGN;
 }
 
@@ -181,6 +182,7 @@ WHITE [\t ]
 "(" return LPAREN;
 ")" return RPAREN;
 "{" {
+    zone_switch_flag=0;
     if(for_flag==true){//如果在for后面，作用域不变
         return LBRACE;
     }
