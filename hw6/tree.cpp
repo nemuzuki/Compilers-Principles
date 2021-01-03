@@ -5,14 +5,14 @@ string node_type[]={"stmt","type","const","bool","var","op","expr","prog","para"
 string stmt_type[]={"declare","if","while","printf","scanf","for","return","func","decl_char"};
 string op_type[]={"==","!","+","-","*","/","%",">","<",">=","<=","!=","&&","||","+=","-=","++","--"};
 string var_type[]={"int","void","char","string","float","notype"};
-//¼ÓÈë×Ó½Úµã£¨×¢Òâ£¬ÒòÎª²»ÖªµÀÓĞ¼¸¸ö¶ù×Ó£¬ËùÒÔÃ¿¸ö½ÚµãµÄchildÖ»ÓĞÒ»¸ö£©
-//¶øºóÃæµÄ¶ù×Ó¼ÓÈëchild->siblingĞÎ³ÉÒ»¸öÁ´±í
+//åŠ å…¥å­èŠ‚ç‚¹ï¼ˆæ³¨æ„ï¼Œå› ä¸ºä¸çŸ¥é“æœ‰å‡ ä¸ªå„¿å­ï¼Œæ‰€ä»¥æ¯ä¸ªèŠ‚ç‚¹çš„childåªæœ‰ä¸€ä¸ªï¼‰
+//è€Œåé¢çš„å„¿å­åŠ å…¥child->siblingå½¢æˆä¸€ä¸ªé“¾è¡¨
 
 void TreeNode::addChild(TreeNode *node){
     if(this->child!=NULL){
         this->child->addSibling(node);
     }
-    else this->child=node;//Éè¶¨µÚÒ»¸ö¶ù×ÓÎªchild 
+    else this->child=node;//è®¾å®šç¬¬ä¸€ä¸ªå„¿å­ä¸ºchild 
 }
 
 void TreeNode::addSibling(TreeNode *node){
@@ -24,7 +24,7 @@ void TreeNode::addSibling(TreeNode *node){
     
 }
 
-void TreeNode::genNodeId(){//´Ó¸ù½Úµã¿ªÊ¼Öğ¸ö¸³Id
+void TreeNode::genNodeId(){//ä»æ ¹èŠ‚ç‚¹å¼€å§‹é€ä¸ªèµ‹Id
     int cnt=0;
     queue<TreeNode*>q;
     q.push(this);
@@ -43,7 +43,7 @@ void TreeNode::genNodeId(){//´Ó¸ù½Úµã¿ªÊ¼Öğ¸ö¸³Id
     }
 }
 
-void TreeNode::printAST(){//´òÓ¡Óï·¨Ê÷½áµã£¬ÏÈĞò±éÀú
+void TreeNode::printAST(){//æ‰“å°è¯­æ³•æ ‘ç»“ç‚¹ï¼Œå…ˆåºéå†
     cerr<<"no/type/value/children\n";
     queue<TreeNode*>q;
     q.push(this);
@@ -95,7 +95,7 @@ void TreeNode::printNodeTypeInfo(TreeNode *node){
             cerr<<"NODE_STMTS "<<setw(size)<<".";break;
     }
 }
-//Êä³ö×Ó½Úµã±àºÅ
+//è¾“å‡ºå­èŠ‚ç‚¹ç¼–å·
 void TreeNode::printNodeConnection(TreeNode *p){
     if(p->child){
         cerr<<setw(12)<<'[';
@@ -109,12 +109,11 @@ void TreeNode::printNodeConnection(TreeNode *p){
     }
 }
 //#######################################################################################
-//################################ ÀàĞÍ¼ì²é ###########################################
+//################################ ç±»å‹æ£€æŸ¥ ###########################################
 //#######################################################################################
-extern symbol_table symtbl;
 extern action_zone zone[20];
 
-//ºóĞò±éÀú£¬¼ì²éÃ¿¸öÖĞ¼ä½Úµã
+//ååºéå†ï¼Œæ£€æŸ¥æ¯ä¸ªä¸­é—´èŠ‚ç‚¹
 void Tree::type_check(TreeNode *root){
     if(root->child==NULL){
         return;
@@ -125,12 +124,12 @@ void Tree::type_check(TreeNode *root){
         type_check(p->sibling);
         p=p->sibling;
     }
-    stmt_check(root);//ºóĞò±éÀú×îºó´¦Àí¸ù
-    get_temp_var(root);//Ë³±ãÉú³ÉÁÙÊ±±äÁ¿
+    stmt_check(root);//ååºéå†æœ€åå¤„ç†æ ¹
+    get_temp_var(root);//é¡ºä¾¿ç”Ÿæˆä¸´æ—¶å˜é‡
 }
 
 
-VarType Tree::find_id_type(TreeNode *id){//¸ù¾İ·ûºÅ±í²éidµÄÀàĞÍ
+VarType Tree::find_id_type(TreeNode *id){//æ ¹æ®ç¬¦å·è¡¨æŸ¥idçš„ç±»å‹
     if(id->nodeType==NODE_CONST || id->varType!=Notype){
         return id->varType;
     }
@@ -155,15 +154,15 @@ VarType Tree::find_id_type(TreeNode *id){//¸ù¾İ·ûºÅ±í²éidµÄÀàĞÍ
     }
     return Notype;
 }
-//¶ÔËùÓĞÀàĞÍÎªNODE_STMTµÄÓï¾ä½øĞĞ¼ì²é£¨×¢£ºÎÒÖ»¸³¸øÁËidĞĞºÅ£©
+//å¯¹æ‰€æœ‰ç±»å‹ä¸ºNODE_STMTçš„è¯­å¥è¿›è¡Œæ£€æŸ¥ï¼ˆæ³¨ï¼šæˆ‘åªèµ‹ç»™äº†idè¡Œå·ï¼‰
 void Tree::stmt_check(TreeNode *node)
 {
-    //±í´ïÊ½£º9+3.4£¬¼ì²éÁ½ÏîÀàĞÍÊÇ·ñÏàÍ¬
+    //è¡¨è¾¾å¼ï¼š9+3.4ï¼Œæ£€æŸ¥ä¸¤é¡¹ç±»å‹æ˜¯å¦ç›¸åŒ
     if(node->nodeType==NODE_EXPR){
         TreeNode *e1,*e2;
         e1=node->child;
         e2=e1->sibling;
-        //Ë«Ä¿ÔËËã
+        //åŒç›®è¿ç®—
         if(e2){
             VarType type1=find_id_type(e1),type2=find_id_type(e2);
             if(type1!=type2)
@@ -172,13 +171,13 @@ void Tree::stmt_check(TreeNode *node)
             }
             node->varType=type1;
         }
-        //µ¥Ä¿ÔËËã£¬-/+
-        else{//ÉèÖÃ¸¸½ÚµãÀàĞÍ
+        //å•ç›®è¿ç®—ï¼Œ-/+
+        else{//è®¾ç½®çˆ¶èŠ‚ç‚¹ç±»å‹
             node->varType=e1->varType;
         }
     }
-    //ÉùÃ÷Óï¾ä£ºa=2£¬±í´ïÊ½Ç°Ãæ¼ì²é¹ıÁË£¬ÕâÀïÖ»¼ì²éµÈºÅÓÒ±ßÊÇÒ»¸öÊıÖµ»òÕßidµÄÇé¿ö
-    //Èç¹ûÓÒ±ßÊÇid£¬a=b£¬ÄÇÃ´±ØĞë¼ì²é·ûºÅ±í£¬È·¶¨ËüµÄÀàĞÍ
+    //å£°æ˜è¯­å¥ï¼ša=2ï¼Œè¡¨è¾¾å¼å‰é¢æ£€æŸ¥è¿‡äº†ï¼Œè¿™é‡Œåªæ£€æŸ¥ç­‰å·å³è¾¹æ˜¯ä¸€ä¸ªæ•°å€¼æˆ–è€…idçš„æƒ…å†µ
+    //å¦‚æœå³è¾¹æ˜¯idï¼Œa=bï¼Œé‚£ä¹ˆå¿…é¡»æ£€æŸ¥ç¬¦å·è¡¨ï¼Œç¡®å®šå®ƒçš„ç±»å‹
     else if(node->stmtType==STMT_DECL){
         TreeNode *id,*expr;
         id=node->child;
@@ -215,7 +214,7 @@ void Tree::stmt_check(TreeNode *node)
             cerr<<"line "<<real->lineno<<": PRINTF TypeError: "<<type->string_val<<" and "<<var_type[real->varType]<<endl;
         }
     }
-    else if(node->stmtType==STMT_WHILE){//while±£Ö¤ºóÃæµÄÊÇ²¼¶ûĞÍa<b,a+b,»òÕßÊÇa++ÕâÖÖequation
+    else if(node->stmtType==STMT_WHILE){//whileä¿è¯åé¢çš„æ˜¯å¸ƒå°”å‹a<b,a+b,æˆ–è€…æ˜¯a++è¿™ç§equation
         TreeNode *judge;
         judge=node->child;
         if(judge->nodeType!=NODE_BOOL){
@@ -225,20 +224,20 @@ void Tree::stmt_check(TreeNode *node)
 }
 
 //#######################################################################################
-//################################ ±êÇ©Éú³É ###########################################
+//################################ æ ‡ç­¾ç”Ÿæˆ ###########################################
 //#######################################################################################
 
 
-/*±êÇ©Éú³ÉÄ£¿é*/
+/*æ ‡ç­¾ç”Ÿæˆæ¨¡å—*/
 void Tree::get_label(){
     TreeNode *p=root;
     p->label.begin_label = "_start";
-    //¸øÃ¿¸östmt½ÚµãÌáÇ°ÉèÖÃºÃ±êÇ©£¬ÒÔ±ã´úÂëÉú³ÉÊ±Ö±½ÓÊ¹ÓÃ
+    //ç»™æ¯ä¸ªstmtèŠ‚ç‚¹æå‰è®¾ç½®å¥½æ ‡ç­¾ï¼Œä»¥ä¾¿ä»£ç ç”Ÿæˆæ—¶ç›´æ¥ä½¿ç”¨
     for(p=root->child;p;p=p->sibling){
         recursive_get_label(p);
     }
 }
-//·ÖÅäĞÂµÄlabel
+//åˆ†é…æ–°çš„label
 string Tree::new_label(){
     char tmp[20];
     sprintf(tmp, ".L%d", label_seq);
@@ -259,9 +258,9 @@ void Tree::recursive_get_label(TreeNode *node){
         expr_get_label(node);
     }
 }
-//¸østmtµÄ¸÷¸ö×Ó½Úµã¸³ÓèÇ°ºó±êÇ©(while,if,for)
-//Éè¶¨judgeµÄtrueºÍfalse£»stmtsµÄbeginºÍnext£»tµÄbeginºÍnext£¨Èç¹ûÒ»¸öÓï¾äµÄÇ°ºóÓĞ±êÇ©£¬¾ÍĞèÒªÉè¶¨£©
-//×¢ÒâÕâÀïµÄstmts²»ÊÇÒ»¸öÓï¾ä£¬¶øÊÇÓï¾äµÄ¼¯ºÏ
+//ç»™stmtçš„å„ä¸ªå­èŠ‚ç‚¹èµ‹äºˆå‰åæ ‡ç­¾(while,if,for)
+//è®¾å®šjudgeçš„trueå’Œfalseï¼›stmtsçš„beginå’Œnextï¼›tçš„beginå’Œnextï¼ˆå¦‚æœä¸€ä¸ªè¯­å¥çš„å‰åæœ‰æ ‡ç­¾ï¼Œå°±éœ€è¦è®¾å®šï¼‰
+//æ³¨æ„è¿™é‡Œçš„stmtsä¸æ˜¯ä¸€ä¸ªè¯­å¥ï¼Œè€Œæ˜¯è¯­å¥çš„é›†åˆ
 void Tree::stmt_get_label(TreeNode *t){
     switch(t->stmtType){
         case STMT_DECL:{
@@ -273,7 +272,7 @@ void Tree::stmt_get_label(TreeNode *t){
                 }
             }
             if(i==varq_len){
-                varq[varq_len++]=id;//ËùÓĞ±äÁ¿µ±³ÉÈ«¾Ö±äÁ¿
+                varq[varq_len++]=id;//æ‰€æœ‰å˜é‡å½“æˆå…¨å±€å˜é‡
             }
 
             break;
@@ -287,19 +286,19 @@ void Tree::stmt_get_label(TreeNode *t){
                 }
             }
             if(i==varq_len){
-                varq[varq_len++]=id;//ËùÓĞ±äÁ¿µ±³ÉÈ«¾Ö±äÁ¿
+                varq[varq_len++]=id;//æ‰€æœ‰å˜é‡å½“æˆå…¨å±€å˜é‡
             }
             break;
         }
-        case STMT_IF:{//ifÓĞÁ½ÖÖ£¬Ò»ÖÖÃ»ÓĞelse£¬Ò»ÖÖÓĞelse
+        case STMT_IF:{//ifæœ‰ä¸¤ç§ï¼Œä¸€ç§æ²¡æœ‰elseï¼Œä¸€ç§æœ‰else
             /*
-            Ã»ÓĞelse
+            æ²¡æœ‰else
             L0: judge
                 jne L2
             L1: stmts
             L2:
 
-            ÓĞelse
+            æœ‰else
             L0: judge
                 jne L2
             L1: stmts
@@ -311,7 +310,7 @@ void Tree::stmt_get_label(TreeNode *t){
             judge=t->child;
             stmts=judge->sibling;
             else_stmts=stmts->sibling;
-            //Ã»ÓĞelse
+            //æ²¡æœ‰else
             if(else_stmts==NULL){
                 if (t->label.next_label == "")
                 {
@@ -319,7 +318,7 @@ void Tree::stmt_get_label(TreeNode *t){
                 }
                 judge->label.true_label=stmts->label.begin_label= new_label();//L1
                 judge->label.false_label=stmts->label.next_label=t->label.next_label;
-                //judgeÔÚÎïÀíÉÏµÄÏÂÒ»¿é´úÂë£¬next±êÇ©ÔÚÊä³öÌø×ªÖ¸ÁîÊ±ÖÁ¹ØÖØÒª
+                //judgeåœ¨ç‰©ç†ä¸Šçš„ä¸‹ä¸€å—ä»£ç ï¼Œnextæ ‡ç­¾åœ¨è¾“å‡ºè·³è½¬æŒ‡ä»¤æ—¶è‡³å…³é‡è¦
                 judge->label.next_label=stmts->label.begin_label;
                 if (t->sibling){
                     t->sibling->label.begin_label = t->label.next_label;
@@ -327,7 +326,7 @@ void Tree::stmt_get_label(TreeNode *t){
                 recursive_get_label(judge);
                 recursive_get_label(stmts);
             }
-            //ÓĞelse
+            //æœ‰else
             else{
                 if (t->label.next_label == "")
                 {
@@ -350,7 +349,7 @@ void Tree::stmt_get_label(TreeNode *t){
         }
         
         case STMT_WHILE:{
-            /*nodeÊÇÕû¸öwhileÓï¾ä
+            /*nodeæ˜¯æ•´ä¸ªwhileè¯­å¥
             
             L1: stmts
             L0: judge 
@@ -358,46 +357,46 @@ void Tree::stmt_get_label(TreeNode *t){
             L2:
 
             */
-            TreeNode *judge,*stmts;//ÅĞ¶ÏÓï¾äºÍÑ­»·Ìå
+            TreeNode *judge,*stmts;//åˆ¤æ–­è¯­å¥å’Œå¾ªç¯ä½“
             judge=t->child;
             stmts=judge->sibling;
-            //·ÖÅäÕû¸öÑ­»·¿ªÊ¼µÄ±êÇ©
+            //åˆ†é…æ•´ä¸ªå¾ªç¯å¼€å§‹çš„æ ‡ç­¾
             if(t->label.begin_label==""){
                 t->label.begin_label=new_label();//L0
             }
-            //Ñ­»·ÌåµÄÏÂÒ»ÌõÓï¾äÊÇÑ­»·µÄ¿ªÊ¼
+            //å¾ªç¯ä½“çš„ä¸‹ä¸€æ¡è¯­å¥æ˜¯å¾ªç¯çš„å¼€å§‹
             stmts->label.next_label=t->label.begin_label;
-            //Èç¹ûÅĞ¶ÏÕıÈ·£¬Ôò¿ªÊ¼Ñ­»·Ìå
+            //å¦‚æœåˆ¤æ–­æ­£ç¡®ï¼Œåˆ™å¼€å§‹å¾ªç¯ä½“
             stmts->label.begin_label=judge->label.true_label=new_label();//L1
 
-            //·ÖÅäÕû¸öÑ­»·½áÊøµÄ±êºÅ
+            //åˆ†é…æ•´ä¸ªå¾ªç¯ç»“æŸçš„æ ‡å·
             if (t->label.next_label == ""){
                 t->label.next_label = new_label();//L2
             }
-            //Ñ­»·Ìõ¼şµÄ¼ÙÖµ±êºÅ¼´ÎªÕû¸öÑ­»·µÄÏÂÒ»ÌõÓï¾ä±êºÅ
+            //å¾ªç¯æ¡ä»¶çš„å‡å€¼æ ‡å·å³ä¸ºæ•´ä¸ªå¾ªç¯çš„ä¸‹ä¸€æ¡è¯­å¥æ ‡å·
             judge->label.false_label = t->label.next_label;
-            //ĞÖµÜ½ÚµãµÄ¿ªÊ¼±êºÅ¼´Îªµ±Ç°½ÚµãµÄÏÂÒ»ÌõÓï¾äµÄ±êºÅ
+            //å…„å¼ŸèŠ‚ç‚¹çš„å¼€å§‹æ ‡å·å³ä¸ºå½“å‰èŠ‚ç‚¹çš„ä¸‹ä¸€æ¡è¯­å¥çš„æ ‡å·
             if (t->sibling){
                 t->sibling->label.begin_label = t->label.next_label;
             }
 
             judge->label.next_label=t->label.next_label;
-            //µİ¹éÉú³É
+            //é€’å½’ç”Ÿæˆ
             recursive_get_label(judge);
             recursive_get_label(stmts);
             break;
         }
 
         case STMT_FOR:{
-            //for Óï¾äÓĞËÄ¸ö²¿·Ö£º³õÊ¼»¯Óï¾ä£¬judge£¬µü´úÓï¾ätransºÍstmts
+            //for è¯­å¥æœ‰å››ä¸ªéƒ¨åˆ†ï¼šåˆå§‹åŒ–è¯­å¥ï¼Œjudgeï¼Œè¿­ä»£è¯­å¥transå’Œstmts
             /*for(init;judge;trans)stmts;
-            ÏÈÈ¥ÅĞ¶Ïjudge£¬Èç¹ûÕıÈ·È¥stmts£¬È»ºóµü´útrans
+            å…ˆå»åˆ¤æ–­judgeï¼Œå¦‚æœæ­£ç¡®å»stmtsï¼Œç„¶åè¿­ä»£trans
             L0: init
                 jmp L2
             L1: stmts
                 trans
             L2: judge
-                ÕıÈ·Ôò L1
+                æ­£ç¡®åˆ™ L1
             L3:
             */
             TreeNode *init,*judge,*trans,*stmts;
@@ -445,7 +444,7 @@ void Tree::stmt_get_label(TreeNode *t){
         }
     }
 }
-//´¦Àíbool±í´ïÊ½±êÇ©(&&,||,!)
+//å¤„ç†boolè¡¨è¾¾å¼æ ‡ç­¾(&&,||,!)
 void Tree::expr_get_label(TreeNode *judge){
     if(judge->nodeType!=NODE_BOOL){
         return;
@@ -453,10 +452,10 @@ void Tree::expr_get_label(TreeNode *judge){
     TreeNode *e1,*e2;
     e1=judge->child;
     e2=e1->sibling;
-    //judgeµÄtrueºÍfalse¼Ì³Ğ¸ø×Ó½Úµã
+    //judgeçš„trueå’Œfalseç»§æ‰¿ç»™å­èŠ‚ç‚¹
     switch (judge->opType){
-        //ÓëÔËËã£¬Èç¹ûÓĞÒ»¸ö´í£¬ÔòÕûÌå´í£»¶¼¶Ô£¬½øÈëtrue±êÇ©
-        /*and´úÂë¸ñÊ½ÈçÏÂ
+        //ä¸è¿ç®—ï¼Œå¦‚æœæœ‰ä¸€ä¸ªé”™ï¼Œåˆ™æ•´ä½“é”™ï¼›éƒ½å¯¹ï¼Œè¿›å…¥trueæ ‡ç­¾
+        /*andä»£ç æ ¼å¼å¦‚ä¸‹
         begin:
             e1
             jne false
@@ -466,6 +465,8 @@ void Tree::expr_get_label(TreeNode *judge){
         false:######
         */
         case OP_AND:{
+            e1->label.begin_label=judge->label.begin_label;//ä»£ç å—çš„å¼€å§‹æ ‡ç­¾åˆ«å¿˜äº†è®¾ç½®ï¼Œä¸ºäº†å¤šä¸ªä¸æˆ–éç»„åˆçš„æƒ…å†µï¼ˆä¾‹31ï¼‰
+
             e1->label.true_label=e2->label.begin_label=new_label();
             e2->label.true_label=judge->label.true_label;
             e1->label.false_label=e2->label.false_label=judge->label.false_label;
@@ -476,7 +477,7 @@ void Tree::expr_get_label(TreeNode *judge){
             expr_get_label(e2);
             break;
         }
-        /*or´úÂë¸ñÊ½ÈçÏÂ
+        /*orä»£ç æ ¼å¼å¦‚ä¸‹
         begin:
             e1
             je ture
@@ -486,10 +487,12 @@ void Tree::expr_get_label(TreeNode *judge){
         false:######
         */
         case OP_OR:{
+            e1->label.begin_label=judge->label.begin_label;
+
             e1->label.true_label=e2->label.true_label=judge->label.true_label;
             e1->label.false_label=e2->label.begin_label=new_label();
             e2->label.false_label=judge->label.false_label;
-            //¶¨Òå´úÂëµÄnext±êÇ©£¬ÔÚÊä³öÌø×ªÖ¸ÁîÊ±ÖÁ¹ØÖØÒª£¡
+            //å®šä¹‰ä»£ç çš„nextæ ‡ç­¾ï¼Œåœ¨è¾“å‡ºè·³è½¬æŒ‡ä»¤æ—¶è‡³å…³é‡è¦ï¼
             e1->label.next_label=e2->label.begin_label;
             e2->label.next_label=judge->label.next_label;
             expr_get_label(e1);
@@ -503,6 +506,8 @@ void Tree::expr_get_label(TreeNode *judge){
         false:#####
         */
         case OP_NOT:{
+            e1->label.begin_label=judge->label.begin_label;
+
             e1->label.true_label=judge->label.false_label;
             e1->label.false_label=judge->label.true_label;
             e1->label.next_label=judge->label.next_label;
@@ -513,17 +518,17 @@ void Tree::expr_get_label(TreeNode *judge){
 }
 
 //#######################################################################################
-//################################ ´úÂëÉú³É ###########################################
+//################################ ä»£ç ç”Ÿæˆ ###########################################
 //#######################################################################################
 
-//µÚÒ»±éÉ¨ÃèÓï·¨Ê÷Ê±£¬¶ÔÓÚ±í´ïÊ½£¬Èça+b+cĞèÒªÁÙÊ±±äÁ¿´æ´¢a+b£¬¸Ãº¯ÊıÓÃÀ´×÷Îª¼ÆÊıÆ÷
+//ç¬¬ä¸€éæ‰«æè¯­æ³•æ ‘æ—¶ï¼Œå¯¹äºè¡¨è¾¾å¼ï¼Œå¦‚a+b+céœ€è¦ä¸´æ—¶å˜é‡å­˜å‚¨a+bï¼Œè¯¥å‡½æ•°ç”¨æ¥ä½œä¸ºè®¡æ•°å™¨
 void Tree::get_temp_var(TreeNode *t){
     if (t->nodeType != NODE_EXPR)
 		return;
 
 	TreeNode *arg1 = t->child;
 	TreeNode *arg2 = arg1->sibling;
-    //µ¥Ä¿ÔËËãµÄÇé¿ö£¬²»ÓÃĞÂµÄÁÙÊ±±äÁ¿
+    //å•ç›®è¿ç®—çš„æƒ…å†µï¼Œä¸ç”¨æ–°çš„ä¸´æ—¶å˜é‡
 	if (arg1->nodeType == NODE_OP){//-(a+b)
 		temp_var_seq--;
     }
@@ -535,18 +540,18 @@ void Tree::get_temp_var(TreeNode *t){
 }
 
 /*
-´úÂëÉú³ÉµÄÈë¿Ú
-£¨1£©Éú³ÉÍ·²¿
-£¨2£©°Ñ±äÁ¿£¨ÁÙÊ±ºÍ·ÇÁÙÊ±µÄ£©·ÅÇ°Ãæ
-£¨3£©´úÂëÖ÷Ìå²¿·Ö£ºÍ¨¹ırecursiveºÍstmt½øĞĞ´ÓÉÏµ½ÏÂµÄµİ¹é
-£¨4£©ret
+ä»£ç ç”Ÿæˆçš„å…¥å£
+ï¼ˆ1ï¼‰ç”Ÿæˆå¤´éƒ¨
+ï¼ˆ2ï¼‰æŠŠå˜é‡ï¼ˆä¸´æ—¶å’Œéä¸´æ—¶çš„ï¼‰æ”¾å‰é¢
+ï¼ˆ3ï¼‰ä»£ç ä¸»ä½“éƒ¨åˆ†ï¼šé€šè¿‡recursiveå’Œstmtè¿›è¡Œä»ä¸Šåˆ°ä¸‹çš„é€’å½’
+ï¼ˆ4ï¼‰ret
 */
 
 void Tree::gen_code(TreeNode *root){
     get_label();
-    gen_header();//Éú³ÉÍ·²¿
+    gen_header();//ç”Ÿæˆå¤´éƒ¨
 
-    //´ÓÒ»¿ªÊ¼´úÂë¿ªÊ¼ÕÒËùÓĞµÄÉùÃ÷Óï¾ä£¬ÕâĞ©¶¼ÊÇÈ«¾Ö±äÁ¿£¬·ÅÔÚÖ÷Ìå´úÂëÇ°Ãæ
+    //ä»ä¸€å¼€å§‹ä»£ç å¼€å§‹æ‰¾æ‰€æœ‰çš„å£°æ˜è¯­å¥ï¼Œè¿™äº›éƒ½æ˜¯å…¨å±€å˜é‡ï¼Œæ”¾åœ¨ä¸»ä½“ä»£ç å‰é¢
     gen_decl();
     
     cout << endl << endl << "# your asm code here" << endl;
@@ -555,22 +560,22 @@ void Tree::gen_code(TreeNode *root){
 
     TreeNode *p;
     for(p=root->child;p;p=p->sibling){
-        recursive_gen_code(p);//´úÂëÉú³É£¬´Ó¸ù¿ªÊ¼µİ¹é
+        recursive_gen_code(p);//ä»£ç ç”Ÿæˆï¼Œä»æ ¹å¼€å§‹é€’å½’
     }
 
 
-    //printf±Ø±¸
+    //printfå¿…å¤‡
     cout<<"\tmovl\t$0, %eax\n";
 	cout<<"\tmovl\t-4(%ebp), %ecx\n";
 	cout<<"\tleave\n";
 	cout<<"\tleal\t-4(%ecx), %esp\n";
 	cout << "\tret" << endl;
-    cout<<"\t.section\t.note.GNU-stack,\"\",@progbits\n";//ÔÊĞíÊ¹ÓÃÕ»
+    cout<<"\t.section\t.note.GNU-stack,\"\",@progbits\n";//å…è®¸ä½¿ç”¨æ ˆ
 }
 
 
 void Tree::gen_header(){
-    /*¶¨Òå×Ö·û´®
+    /*å®šä¹‰å­—ç¬¦ä¸²
     .LC0:
 	.string	"%d"
 	.text
@@ -582,19 +587,19 @@ void Tree::gen_header(){
         string s=strq.front().str->string_val;
         cout<<".LC"<<cnt<<":\n";
         cout<<"\t.string\t"<<s<<"\n";
-        strq.front().str->int_val=cnt++;//int_val¸³Îª±àºÅ
+        strq.front().str->int_val=cnt++;//int_valèµ‹ä¸ºç¼–å·
         strq.pop();
     }
     cout<<"\t.text\n\t.globl\tmain\n\t.type	main, @function\n";
     
 }
 
-//È«¾Ö±äÁ¿ºÍÁÙÊ±±äÁ¿·ÅÔÚÖ÷Ìå´úÂëÇ°Ãæ
+//å…¨å±€å˜é‡å’Œä¸´æ—¶å˜é‡æ”¾åœ¨ä¸»ä½“ä»£ç å‰é¢
 void Tree::gen_decl(){
     cout << endl << "# define your veriables and temp veriables here" << endl;
 	cout << "\t.bss" << endl;
 
-    //ÉùÃ÷Óï¾ä.comm	a,4,4
+    //å£°æ˜è¯­å¥.comm	a,4,4
     for(int i=0;i<varq_len;++i){
         if(varq[i]->varType==VAR_INTEGER){
             cout<<"\t.comm "<<varq[i]->var_name<<",4,4"<<endl;
@@ -603,7 +608,7 @@ void Tree::gen_decl(){
             cout<<"\t.comm "<<varq[i]->var_name<<",1,1"<<endl;
         }
     }
-	//´òÓ¡ÁÙÊ±±äÁ¿
+	//æ‰“å°ä¸´æ—¶å˜é‡
 	for (int i = 0; i < temp_var_seq; i++)
 	{
 		cout<<"\t.comm "<< "t" <<  i <<",4,4"<<endl;
@@ -611,7 +616,7 @@ void Tree::gen_decl(){
 }
 
 
-//¶ÔÒ»¸ö½ÚµãÉú³É´úÂë
+//å¯¹ä¸€ä¸ªèŠ‚ç‚¹ç”Ÿæˆä»£ç 
 void Tree::recursive_gen_code(TreeNode *node){
     if(node->nodeType==NODE_STMTS){
         TreeNode *stmts=node,*stmt;
@@ -628,10 +633,10 @@ void Tree::recursive_gen_code(TreeNode *node){
 }
 
 
-//node_stmtÉú³É´úÂë
-/*jne:Èç¹ûcmplÁ½¸ö²Ù×÷Êı²»µÈÔòÌø×ª£»je£ºÈç¹ûcmplÁ½¸ö²Ù×÷ÊıÏàµÈÔòÌø×ª£»jmp£ºÖ±½ÓÌø×ª
-²»¹ı¶ÔÓÚtestlÊÇ²âÊÔ²Ù×÷ÊıÊÇ·ñÎª0£¬Ò²¾ÍÊÇËµÏ£ÍûÎª0
-ËùÒÔjne:Èç¹ûtestlÎª1ÔòÌø×ª£»je£ºÈç¹ûtestlÎª0ÔòÌø×ª
+//node_stmtç”Ÿæˆä»£ç 
+/*jne:å¦‚æœcmplä¸¤ä¸ªæ“ä½œæ•°ä¸ç­‰åˆ™è·³è½¬ï¼›jeï¼šå¦‚æœcmplä¸¤ä¸ªæ“ä½œæ•°ç›¸ç­‰åˆ™è·³è½¬ï¼›jmpï¼šç›´æ¥è·³è½¬
+ä¸è¿‡å¯¹äºtestlæ˜¯æµ‹è¯•æ“ä½œæ•°æ˜¯å¦ä¸º0ï¼Œä¹Ÿå°±æ˜¯è¯´å¸Œæœ›ä¸º0
+æ‰€ä»¥jne:å¦‚æœtestlä¸º1åˆ™è·³è½¬ï¼›jeï¼šå¦‚æœtestlä¸º0åˆ™è·³è½¬
 */
 void Tree::stmt_gen_code(TreeNode *t){
     if(t->stmtType==STMT_FUNC){
@@ -640,7 +645,7 @@ void Tree::stmt_gen_code(TreeNode *t){
         cout<<id->var_name<<":\n";
         cout<<"\tendbr32\n";
 
-        //printf±ØÒªÓï¾ä
+        //printfå¿…è¦è¯­å¥
         cout<<"\tleal\t4(%esp), %ecx\n";
         cout<<"\tandl\t$-16, %esp\n";
         cout<<"\tpushl\t-4(%ecx)\n";
@@ -654,20 +659,20 @@ void Tree::stmt_gen_code(TreeNode *t){
         }
     }
     else if(t->stmtType==STMT_DECL){
-        /*¸³ÖµÓï¾ä£¬ÓĞËÄÖÖÇé¿ö£º
+        /*èµ‹å€¼è¯­å¥ï¼Œæœ‰å››ç§æƒ…å†µï¼š
         a
         a=expr
-        a+=expr£¨opType==OP_ADD_SELF,OP_SUB_SELF£©
-        a++£¨opType==OP_ADD_ONE,OP_SUB_ONE£©
+        a+=exprï¼ˆopType==OP_ADD_SELF,OP_SUB_SELFï¼‰
+        a++ï¼ˆopType==OP_ADD_ONE,OP_SUB_ONEï¼‰
         */
         TreeNode *expr=t->child->sibling;
         if(t->opType==OP_ADD_SELF){
             recursive_gen_code(expr);
-            if(expr->child){//ÊÇ±í´ïÊ½
+            if(expr->child){//æ˜¯è¡¨è¾¾å¼
                 cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
                 cout<<"\taddl\t%eax, "<<t->child->var_name<<endl;
             }
-            else{//ÊÇid»òÕß³£Êı
+            else{//æ˜¯idæˆ–è€…å¸¸æ•°
                 cout<<"\tmovl\t";
                 print_value(expr);
                 cout<<", %eax\n";
@@ -676,11 +681,11 @@ void Tree::stmt_gen_code(TreeNode *t){
         }
         else if(t->opType==OP_SUB_SELF){
             recursive_gen_code(expr);
-            if(expr->child){//ÊÇ±í´ïÊ½
+            if(expr->child){//æ˜¯è¡¨è¾¾å¼
                 cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
                 cout<<"\tsubl\t%eax, "<<t->child->var_name<<endl;
             }
-            else{//ÊÇid»òÕß³£Êı
+            else{//æ˜¯idæˆ–è€…å¸¸æ•°
                 cout<<"\tmovl\t";
                 print_value(expr);
                 cout<<", %eax\n";
@@ -695,18 +700,18 @@ void Tree::stmt_gen_code(TreeNode *t){
         }
         else if(expr){//a=expr
             TreeNode *id=t->child;
-            //Á¬µÈ£¬ÏÈÕÒµ½×îÄ©µÄ±í´ïÊ½
+            //è¿ç­‰ï¼Œå…ˆæ‰¾åˆ°æœ€æœ«çš„è¡¨è¾¾å¼
             while(expr->child && expr->nodeType==NODE_STMT){
                 expr=expr->child->sibling;
             }
             recursive_gen_code(expr);
-            //°Ñ±í´ïÊ½¶ÔÓ¦µÄÁÙÊ±±äÁ¿¸³¸ø×ó±ßµÄÃ¿¸öid£¬Ò»¶¨Ğ¡ĞÄ¿ÕÖ¸Õë
+            //æŠŠè¡¨è¾¾å¼å¯¹åº”çš„ä¸´æ—¶å˜é‡èµ‹ç»™å·¦è¾¹çš„æ¯ä¸ªidï¼Œä¸€å®šå°å¿ƒç©ºæŒ‡é’ˆ
             while(id){
-                if(expr->child){//×îÓÒÊÇ±í´ïÊ½
+                if(expr->child){//æœ€å³æ˜¯è¡¨è¾¾å¼
                     cout<<"\tmovl\tt"<<expr->temp_var<<", %eax\n";
                     cout<<"\tmovl\t%eax, "<<id->var_name<<endl;
                 }
-                else{//ÊÇid»òÕß³£Êı
+                else{//æ˜¯idæˆ–è€…å¸¸æ•°
                     cout<<"\tmovl\t";
                     print_value(expr);
                     cout<<", %eax\n";
@@ -720,7 +725,7 @@ void Tree::stmt_gen_code(TreeNode *t){
         }
     }
 
-    else if(t->stmtType==STMT_DECL_CHAR){//×Ö·û¸³Öµ
+    else if(t->stmtType==STMT_DECL_CHAR){//å­—ç¬¦èµ‹å€¼
         /*
         movb	$57, s
         movb	s, %al
@@ -740,17 +745,17 @@ void Tree::stmt_gen_code(TreeNode *t){
         stmts=judge->sibling;
         else_stmts=stmts->sibling;
 
-        deal_with_judge(judge);//ÅĞ¶ÏÓï¾ä
-        cout<<stmts->label.begin_label<<":\n";//ÕıÈ·±êÇ©
+        deal_with_judge(judge);//åˆ¤æ–­è¯­å¥
+        cout<<stmts->label.begin_label<<":\n";//æ­£ç¡®æ ‡ç­¾
         recursive_gen_code(stmts);
-        if(else_stmts){//Èç¹ûÓĞelse
+        if(else_stmts){//å¦‚æœæœ‰else
             cout<<"\tjmp\t"<<else_stmts->label.next_label<<endl;
             cout<<stmts->label.next_label<<":\n";
             recursive_gen_code(else_stmts);
         }
         cout<<t->label.next_label<<":\n";
     } 
-    //whileÓï¾äÏÈÉú³Éjudge£¬È»ºójumpµ½judgeµÄnext
+    //whileè¯­å¥å…ˆç”Ÿæˆjudgeï¼Œç„¶åjumpåˆ°judgeçš„next
     else if(t->stmtType==STMT_WHILE){
         TreeNode *judge=t->child;
         TreeNode *stmts=judge->sibling;
@@ -761,7 +766,7 @@ void Tree::stmt_gen_code(TreeNode *t){
 
         cout<<t->label.begin_label<<":\n";    
 
-        //½ÓÏÂÀ´ĞèÒª¶Ôjudge°´ÕÕÓë»ò·Ç·ûºÅ½øĞĞ»®·Ö£¬¼´±éÀúÓï·¨Ê÷£¬²¢Éú³ÉjudgeµÄ´úÂë
+        //æ¥ä¸‹æ¥éœ€è¦å¯¹judgeæŒ‰ç…§ä¸æˆ–éç¬¦å·è¿›è¡Œåˆ’åˆ†ï¼Œå³éå†è¯­æ³•æ ‘ï¼Œå¹¶ç”Ÿæˆjudgeçš„ä»£ç 
         deal_with_judge(judge);
         cout<<t->label.next_label<<":\n";
     }
@@ -802,10 +807,10 @@ void Tree::stmt_gen_code(TreeNode *t){
         str=t->child;
         id=str->sibling;
         cout<<"\tsubl\t$12, %esp\n";
-        cout<<"\tpushl\t$";//È¡µØÖ·
+        cout<<"\tpushl\t$";//å–åœ°å€
         print_value(id);
         cout<<endl;
-        cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//×Ö·û´®µÄ±êÇ©
+        cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//å­—ç¬¦ä¸²çš„æ ‡ç­¾
         cout<<"\tcall\tscanf\n";
         cout<<"\taddl\t$16, %esp\n";
     }
@@ -833,16 +838,16 @@ void Tree::stmt_gen_code(TreeNode *t){
             id_type=find_id_type(id);
         }
         if(id==NULL ||id_type==VAR_INTEGER){
-            cout<<"\tsubl\t$8, %esp\n";//ÏÈÈÃÕ»¶¥-8£¬Áô³öÁ½¸ö¿Õ¼ä£¬²ÅÄÜÑ¹Õ»
+            cout<<"\tsubl\t$8, %esp\n";//å…ˆè®©æ ˆé¡¶-8ï¼Œç•™å‡ºä¸¤ä¸ªç©ºé—´ï¼Œæ‰èƒ½å‹æ ˆ
             cout<<"\tpushl\t";
             if(id){
-                print_value(id);//printfÓĞÁ½¸ö²ÎÊı
+                print_value(id);//printfæœ‰ä¸¤ä¸ªå‚æ•°
             }
             else{
                 cout<<"%eax";
             }
             cout<<endl;
-            cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//×Ö·û´®µÄ±êÇ©
+            cout<<"\tpushl\t$.LC"<<str->int_val<<endl;//å­—ç¬¦ä¸²çš„æ ‡ç­¾
             cout<<"\tcall\tprintf\n";
             cout<<"\taddl\t$16, %esp\n";
         }
@@ -858,7 +863,7 @@ void Tree::stmt_gen_code(TreeNode *t){
     }
 }
 
-//ËùÊôstmtµÄÀàĞÍ£¬judge½Úµã
+//æ‰€å±stmtçš„ç±»å‹ï¼ŒjudgeèŠ‚ç‚¹
 void Tree::deal_with_judge(TreeNode *judge){
     TreeNode *e1=judge->child;
     TreeNode *e2=e1->sibling;
@@ -870,10 +875,10 @@ void Tree::deal_with_judge(TreeNode *judge){
         deal_with_judge(e2);
     }
     else if(judge->nodeType==NODE_BOOL){
-        //Êä³öÕâÒ»¿éµÄ¿ªÊ¼±êÇ©
+        //è¾“å‡ºè¿™ä¸€å—çš„å¼€å§‹æ ‡ç­¾
         if(judge->label.begin_label!="")cout<<judge->label.begin_label<<":\n";
         recursive_gen_code(judge);
-        //Èç¹ûÌø×ª±êÇ©ºÍÏÂÃæÒ»¿éµÄ¿ªÊ¼±êÇ©ÏàÍ¬£¬¾Í²»Êä³ö
+        //å¦‚æœè·³è½¬æ ‡ç­¾å’Œä¸‹é¢ä¸€å—çš„å¼€å§‹æ ‡ç­¾ç›¸åŒï¼Œå°±ä¸è¾“å‡º
         if(judge->label.true_label!="" && judge->label.next_label!=judge->label.true_label)
         {
             jump_true(judge);
@@ -886,61 +891,61 @@ void Tree::deal_with_judge(TreeNode *judge){
         }
     }
 }
-//´¦ÀíexprµÄ»ã±à
+//å¤„ç†exprçš„æ±‡ç¼–
 void Tree::expr_gen_code(TreeNode *t){
     TreeNode *e1,*e2;
     e1=t->child;
     e2=e1->sibling;
-    //Ê×ÏÈ£¬Èç¹û×Ó½Úµã»¹ÊÇ±í´ïÊ½£¬ĞèÒªÏÈÉú³É×Ó½ÚµãµÄ´úÂë¡£Èça+b+c+d
+    //é¦–å…ˆï¼Œå¦‚æœå­èŠ‚ç‚¹è¿˜æ˜¯è¡¨è¾¾å¼ï¼Œéœ€è¦å…ˆç”Ÿæˆå­èŠ‚ç‚¹çš„ä»£ç ã€‚å¦‚a+b+c+d
     if(e1 && (e1->nodeType==NODE_EXPR)){
         expr_gen_code(e1);
     }
     if(e2 && (e2->nodeType==NODE_EXPR)){
         expr_gen_code(e2);
     }
-    //Ë«Ä¿ÔËËã·û
+    //åŒç›®è¿ç®—ç¬¦
     if(t->opType==OP_ADD && t->child->sibling){//e1+e2
-        //ÏÈÅĞ¶Ïe1µÄÀàĞÍ
+        //å…ˆåˆ¤æ–­e1çš„ç±»å‹
         cout << "\tmovl\t";
         print_value(e1);
-        cout<< ", %eax" <<endl;//°Ñe1½á¹û¸³¸øeax
+        cout<< ", %eax" <<endl;//æŠŠe1ç»“æœèµ‹ç»™eax
         
-        //ÅĞ¶Ïe2µÄÀàĞÍ
+        //åˆ¤æ–­e2çš„ç±»å‹
         cout << "\taddl\t";
         print_value(e2);
         cout << ", %eax" << endl;
         
-        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//Ã¿¼ÆËãÒ»²½£¬°Ñeax¸³¸øÒ»¸öÁÙÊ±±äÁ¿
+        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//æ¯è®¡ç®—ä¸€æ­¥ï¼ŒæŠŠeaxèµ‹ç»™ä¸€ä¸ªä¸´æ—¶å˜é‡
     }
-    else if(t->opType==OP_SUB && t->child->sibling){//e1-e2£¬SUB×÷ÎªË«Ä¿ÔËËã·û
-        //ÏÈÅĞ¶Ïe1µÄÀàĞÍ
+    else if(t->opType==OP_SUB && t->child->sibling){//e1-e2ï¼ŒSUBä½œä¸ºåŒç›®è¿ç®—ç¬¦
+        //å…ˆåˆ¤æ–­e1çš„ç±»å‹
         cout << "\tmovl\t";
-        print_value(e1);//ºóÃæ¾ÍÊÇ³£Á¿µÄÖµ
-        cout<< ", %eax" <<endl;//°Ñe1½á¹û¸³¸øeax
+        print_value(e1);//åé¢å°±æ˜¯å¸¸é‡çš„å€¼
+        cout<< ", %eax" <<endl;//æŠŠe1ç»“æœèµ‹ç»™eax
 
-        //ÅĞ¶Ïe2µÄÀàĞÍ
+        //åˆ¤æ–­e2çš„ç±»å‹
         cout << "\tsubl\t";
         print_value(e2);
         cout << ", %eax" << endl;
         
-        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//Ã¿¼ÆËãÒ»²½£¬°Ñeax¸³¸øÒ»¸öÁÙÊ±±äÁ¿
+        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//æ¯è®¡ç®—ä¸€æ­¥ï¼ŒæŠŠeaxèµ‹ç»™ä¸€ä¸ªä¸´æ—¶å˜é‡
     }
     else if(t->opType==OP_MUL){//e1*e2
-        //ÏÈÅĞ¶Ïe1µÄÀàĞÍ
+        //å…ˆåˆ¤æ–­e1çš„ç±»å‹
         cout << "\tmovl\t";
-        print_value(e1);//ºóÃæ¾ÍÊÇ³£Á¿µÄÖµ
-        cout<< ", %eax" <<endl;//°Ñe1½á¹û¸³¸øeax
+        print_value(e1);//åé¢å°±æ˜¯å¸¸é‡çš„å€¼
+        cout<< ", %eax" <<endl;//æŠŠe1ç»“æœèµ‹ç»™eax
         
-        //ÅĞ¶Ïe2µÄÀàĞÍ
+        //åˆ¤æ–­e2çš„ç±»å‹
         cout << "\timull\t";
         print_value(e2);
         cout << ", %eax" << endl;
         
-        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//Ã¿¼ÆËãÒ»²½£¬°Ñeax¸³¸øÒ»¸öÁÙÊ±±äÁ¿
+        cout << "\tmovl\t%eax, t" << t->temp_var << endl;//æ¯è®¡ç®—ä¸€æ­¥ï¼ŒæŠŠeaxèµ‹ç»™ä¸€ä¸ªä¸´æ—¶å˜é‡
     }
 
     else if(t->opType==OP_DIV){//a/b
-        //e1,e2¶¼½øÈë¼Ä´æÆ÷
+        //e1,e2éƒ½è¿›å…¥å¯„å­˜å™¨
         cout << "\tmovl\t";
         print_value(e1);
         cout<< ", %eax" <<endl;
@@ -949,12 +954,12 @@ void Tree::expr_gen_code(TreeNode *t){
         print_value(e2);
         cout << ", %ecx" << endl;
         
-        cout<<"\tcltd\n";//32Î»À©Õ¹Îª64Î»
+        cout<<"\tcltd\n";//32ä½æ‰©å±•ä¸º64ä½
         cout<<"\tidivl\t%ecx\n";
-        cout << "\tmovl\t%eax, t" << t->temp_var << endl;////×ö³ı·¨ºó£¬ÉÌ±£´æÔÚeax
+        cout << "\tmovl\t%eax, t" << t->temp_var << endl;////åšé™¤æ³•åï¼Œå•†ä¿å­˜åœ¨eax
     }
     else if(t->opType==OP_MOD){
-        //e1,e2¶¼½øÈë¼Ä´æÆ÷
+        //e1,e2éƒ½è¿›å…¥å¯„å­˜å™¨
         cout << "\tmovl\t";
         print_value(e1);
         cout<< ", %eax" <<endl;
@@ -963,13 +968,13 @@ void Tree::expr_gen_code(TreeNode *t){
         print_value(e2);
         cout << ", %ecx" << endl;
         
-        cout<<"\tcltd\n";//32Î»À©Õ¹Îª64Î»
+        cout<<"\tcltd\n";//32ä½æ‰©å±•ä¸º64ä½
         cout<<"\tidivl\t%ecx\n";
-        cout << "\tmovl\t%edx, %eax\n";//×ö³ı·¨ºó£¬ÓàÊı±£´æÔÚedx
+        cout << "\tmovl\t%edx, %eax\n";//åšé™¤æ³•åï¼Œä½™æ•°ä¿å­˜åœ¨edx
         cout << "\tmovl\t%eax, t" << t->temp_var << endl;
     }
 
-    //µ¥Ä¿ÔËËã·û
+    //å•ç›®è¿ç®—ç¬¦
     else if(t->opType==OP_SUB && t->child->sibling==nullptr){
         cout << "\tmovl\t";
         print_value(e1);
@@ -984,9 +989,9 @@ void Tree::expr_gen_code(TreeNode *t){
         cout << "\tmovl\t%eax, t" << t->temp_var << endl;
     }
 
-    //bool±í´ïÊ½µÄ´úÂë³ıÁËÅĞ¶ÏÓï¾ä¶¼Ò»Ñù£¬µ«ÅĞ¶ÏÓï¾äÓëif,while,forµÄÀàĞÍÓĞ¹Ø£¬ËùÒÔĞ´ÔÚstmt_gen_codeÀïÃæ
+    //boolè¡¨è¾¾å¼çš„ä»£ç é™¤äº†åˆ¤æ–­è¯­å¥éƒ½ä¸€æ ·ï¼Œä½†åˆ¤æ–­è¯­å¥ä¸if,while,forçš„ç±»å‹æœ‰å…³ï¼Œæ‰€ä»¥å†™åœ¨stmt_gen_codeé‡Œé¢
     else if(t->nodeType==NODE_BOOL){
-        //°Ñe1,e2´æµ½eax,edx
+        //æŠŠe1,e2å­˜åˆ°eax,edx
         cout<<"\tmovl\t";
         print_value(e1);
         cout<<", %eax\n";
@@ -994,20 +999,20 @@ void Tree::expr_gen_code(TreeNode *t){
         cout<<"\tmovl\t";
         print_value(e2);
         cout<<", %edx\n";
-        //ÕâÀïÓĞ¸ö´ó¿Ó£¬cmpl a,bºóÃæjle´ú±íb<=a!
+        //è¿™é‡Œæœ‰ä¸ªå¤§å‘ï¼Œcmpl a,båé¢jleä»£è¡¨b<=a!
         cout<<"\tcmpl\t"<<"%edx, %eax\n";
     }
 }
-//bool±í´ïÊ½ÕıÈ·Ê±µÄÌø×ªÓï¾ä
+//boolè¡¨è¾¾å¼æ­£ç¡®æ—¶çš„è·³è½¬è¯­å¥
 void Tree::jump_true(TreeNode *judge){
     if(judge->nodeType==NODE_EXPR){
-        cout<<"\ttestl\t%eax, %eax\n";//testl ÊÇ²âÊÔeaxÊÇ·ñÎª0£¬
+        cout<<"\ttestl\t%eax, %eax\n";//testl æ˜¯æµ‹è¯•eaxæ˜¯å¦ä¸º0ï¼Œ
     }
-    //Èç¹ûjudgeÊÇbool_expr£¬ÓÃcmplÓï¾ä£¬ÕâÔÚexpr_gen_codeÀïÃæ¶¨Òå
+    //å¦‚æœjudgeæ˜¯bool_exprï¼Œç”¨cmplè¯­å¥ï¼Œè¿™åœ¨expr_gen_codeé‡Œé¢å®šä¹‰
     else if(judge->nodeType==NODE_BOOL){
         switch(judge->opType){
             case OP_EQUAL:{cout<<"\tje\t";break;}
-            case OP_LARGER:{cout<<"\tjg\t";break;}//jµÄÀàĞÍÓë·ûºÅÏàÍ¬
+            case OP_LARGER:{cout<<"\tjg\t";break;}//jçš„ç±»å‹ä¸ç¬¦å·ç›¸åŒ
             case OP_LARGER_EQUAL:{cout<<"\tjge\t";break;}
             case OP_SMALLER:{cout<<"\tjl\t";break;}
             case OP_SMALLER_EQUAL:{cout<<"\tjle\t";break;}
@@ -1015,11 +1020,11 @@ void Tree::jump_true(TreeNode *judge){
         }
     }
 }
-//bool±í´ïÊ½´íÎóÊ±µÄÌø×ªÓï¾ä
+//boolè¡¨è¾¾å¼é”™è¯¯æ—¶çš„è·³è½¬è¯­å¥
 void Tree::jump_false(TreeNode *judge){
     if(judge->nodeType==NODE_EXPR){
         cout<<"\ttestl\t%eax, %eax\n";
-        //ifºÍwhileµÄÌø×ªÓï¾ä²»Í¬£¬ÒòÎª±êÇ©²»Í¬£»forºÍwhileÏàÍ¬
+        //ifå’Œwhileçš„è·³è½¬è¯­å¥ä¸åŒï¼Œå› ä¸ºæ ‡ç­¾ä¸åŒï¼›forå’Œwhileç›¸åŒ
     }
     else if(judge->nodeType==NODE_BOOL){
         switch(judge->opType){
@@ -1032,9 +1037,9 @@ void Tree::jump_false(TreeNode *judge){
         }
     }
 }
-//Ğ¡¹¤¾ß£º´òÓ¡Ò»¸ö½ÚµãµÄÖµ
+//å°å·¥å…·ï¼šæ‰“å°ä¸€ä¸ªèŠ‚ç‚¹çš„å€¼
 void Tree::print_value(TreeNode *e1){
-    if (e1->nodeType == NODE_VAR){//±äÁ¿
+    if (e1->nodeType == NODE_VAR){//å˜é‡
         cout << e1->var_name;
     }
     else if(e1->nodeType==NODE_EXPR){
