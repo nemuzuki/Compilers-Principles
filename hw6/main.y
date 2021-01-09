@@ -71,7 +71,6 @@ statement
     | return_statement {$$=$1;}
     | self_add SEMICOLON {$$=$1;}
     ;
-
 instruction
     : instruction_element{
         $$=$1;  
@@ -82,6 +81,9 @@ instruction
     | instruction COMMA instruction_element{
         $$=$1;
         $$->addSibling($3);
+    }
+    | self_add {
+        $$=$1;
     }
     ;
 instruction_element
@@ -397,6 +399,7 @@ self_add
         node->addChild($1);
         $$=node;  
     }
+    ;
 type
     : INT {//这代表"int"这三个字母
         TreeNode *node=new TreeNode(NODE_TYPE);

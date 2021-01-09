@@ -154,7 +154,7 @@ VarType Tree::find_id_type(TreeNode *id){//根据符号表查id的类型
     }
     return Notype;
 }
-//对所有类型为NODE_STMT的语句进行检查（注：我只赋给了id行号）
+//对所有类型为NODE_STMT的语句进行检查
 void Tree::stmt_check(TreeNode *node)
 {
     //表达式：9+3.4，检查两项类型是否相同
@@ -217,8 +217,25 @@ void Tree::stmt_check(TreeNode *node)
     else if(node->stmtType==STMT_WHILE){//while保证后面的是布尔型a<b,a+b,或者是a++这种equation
         TreeNode *judge;
         judge=node->child;
+        VarType judge_type=find_id_type(judge);
         if(judge->nodeType!=NODE_BOOL){
-            cerr<<"line "<<judge->lineno<<": WHILE TypeError: "<<var_type[judge->nodeType]<<" is not boolean type"<<endl;
+            cerr<<"line "<<judge->lineno<<": WHILE TypeError: "<<var_type[judge_type]<<" is not boolean type"<<endl;
+        }
+    }
+    else if(node->stmtType==STMT_IF){
+        TreeNode *judge;
+        judge=node->child;
+        VarType judge_type=find_id_type(judge);
+        if(judge->nodeType!=NODE_BOOL){
+            cerr<<"line "<<judge->lineno<<": IF TypeError: "<<var_type[judge_type]<<" is not boolean type"<<endl;
+        }
+    }
+    else if(node->stmtType==STMT_FOR){
+        TreeNode *judge;
+        judge=node->child->sibling;
+        VarType judge_type=find_id_type(judge);
+        if(judge->nodeType!=NODE_BOOL){
+            cerr<<"line "<<judge->lineno<<": FOR TypeError: "<<var_type[judge_type]<<" is not boolean type"<<endl;
         }
     }
 }
@@ -882,7 +899,7 @@ void Tree::deal_with_judge(TreeNode *judge){
         deal_with_judge(e1);
         deal_with_judge(e2);
     }
-    else if(judge->nodeType==NODE_BOOL){
+    else if(judge->nodeType==NODE_BOOL){//是布尔表达式单元，不可再分了
         //输出这一块的开始标签
         if(judge->label.begin_label!="")cout<<judge->label.begin_label<<":\n";
         recursive_gen_code(judge);
@@ -997,7 +1014,7 @@ void Tree::expr_gen_code(TreeNode *t){
         cout << "\tmovl\t%eax, t" << t->temp_var << endl;
     }
 
-    //bool表达式的代码除了判断语句都一样，但判断语句与if,while,for的类型有关，所以写在stmt_gen_code里面
+    //处理bool表达式单元，都是需要cmpl函数来对两边比较
     else if(t->nodeType==NODE_BOOL){
         //把e1,e2存到eax,edx
         cout<<"\tmovl\t";

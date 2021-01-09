@@ -18,6 +18,7 @@ int main ()
         tree->type_check(root);
         cerr<<"type_check ok!"<<endl;
         tree->gen_code(root);
+        cerr<<"generate_code ok!\n";
     }
 }
 int yyerror(char const* message)
